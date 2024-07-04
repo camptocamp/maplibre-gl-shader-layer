@@ -1,0 +1,23 @@
+{
+  "name": "threetiledlayer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "biome": "biome check --max-diagnostics=1000",
+    "biome:fix": "biome check --max-diagnostics=1000 --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "@types/three": "^0.166.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
+  },
+  "dependencies": {
+    "@maptiler/sdk": "^2.2.0",
+    "three": "^0.166.1"
+  }
+}
