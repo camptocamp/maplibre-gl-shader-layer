@@ -4,6 +4,8 @@ import { config, Map as SDKMap } from "@maptiler/sdk";
 import { ThreeTiledLayer } from "./ThreeTiledLayer";
 import type { TileIndex } from "./tools";
 import { Color, type Material, type MeshBasicMaterial } from "three";
+import { TextureTiledLayer } from "./TextureTiledLayer";
+import { RawShaderTiledLayer } from "./RawShaderTiledLayer";
 
 async function init() {
   const container = document.getElementById("map");
@@ -39,4 +41,51 @@ async function init() {
   map.addLayer(tiledLayer);
 }
 
-init();
+// init();
+
+
+// async function init2() {
+//   const container = document.getElementById("map");
+
+//   if (!container) throw new Error('There is no div with the id: "map" ');
+
+//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+//   const map = new SDKMap({ container, hash: true, terrainControl: true });
+
+//   await map.onReadyAsync();
+
+//   console.log("map", map);
+
+//   map.showTileBoundaries = true;
+
+//   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
+
+//   const textureTiledLayer = new TextureTiledLayer("some layer", {
+//     textureUrlPattern: satelliteUrlPattern,
+//   });
+
+//   map.addLayer(textureTiledLayer);
+// }
+
+
+
+async function init3() {
+  const container = document.getElementById("map");
+
+  if (!container) throw new Error('There is no div with the id: "map" ');
+
+  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+  const map = new SDKMap({ container, hash: true, terrainControl: true });
+
+  await map.onReadyAsync();
+
+  console.log("map", map);
+
+  map.showTileBoundaries = true;
+
+  const textureTiledLayer = new RawShaderTiledLayer("some layer");
+
+  map.addLayer(textureTiledLayer);
+}
+
+init3();

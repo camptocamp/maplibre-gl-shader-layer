@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@maptiler/sdk": "^2.2.0",
+    "quick-lru": "^7.0.0",
     "three": "^0.166.1"
   }
 }

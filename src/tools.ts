@@ -1,4 +1,5 @@
 import { type Map as SDKMap, MercatorCoordinate } from "@maptiler/sdk";
+import { Mat4 } from "./ThreeTiledLayer";
 
 export type TileIndex = {
   z: number;
@@ -112,4 +113,43 @@ export function tileIndexToMercatorPosition(ti: TileIndex): TileUnwrappedPositio
     size,
     center: [centerX, centerY],
   };
+}
+
+
+/**
+ * Chunk down a number (float64) into two float32 parts, that can then be summed
+ * to get a float number close to the original float64
+ */
+export function splitFloat64ToFloat32(value: number): [number, number] {
+  const highPart = Math.fround(value);
+  const lowPart = Math.fround(value - highPart);
+  return [highPart, lowPart];
+}
+
+export function clampInt32(n: number): number {
+  const min = ~~(-0xffffffff/2) - 1;
+  const max = ~~(0xffffffff/2);
+
+
+  if (n > max) return max;
+  if (n < min) return min;
+  return Math.trunc(n);
+}
+
+
+function splitDouble(value: number): { high: number, low: number } {
+  const high = Math.fround(value);
+  const low = value - high;
+  return { high, low };
+}
+
+export function splitMatrix(matrix: Mat4): {highMatrix: Mat4, lowMatrix: Mat4} {
+  const highMatrix: Mat4 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const lowMatrix: Mat4 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  for (let i = 0; i < matrix.length; i++) {
+    const { high, low } = splitDouble(matrix[i]);
+    highMatrix[i] = high;
+    lowMatrix[i] = low;
+  }
+  return { highMatrix, lowMatrix };
 }
