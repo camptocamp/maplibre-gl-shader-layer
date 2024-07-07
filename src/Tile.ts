@@ -14,6 +14,19 @@ export class Tile extends Mesh {
 
     const mercatorPosition = tileIndexToMercatorPosition(ti);
     this.scale.set(mercatorPosition.size, mercatorPosition.size, mercatorPosition.size);
+
     this.position.set(mercatorPosition.center[0], mercatorPosition.center[1], 0);
   }
+
+  /**
+   * Get the tile index (a copy)
+   */
+  getTileIndex(): TileIndex {
+    return {
+      x: this.tileIndex.x,
+      y: this.tileIndex.y,
+      z: this.tileIndex.z,
+    }
+  }
+
 }

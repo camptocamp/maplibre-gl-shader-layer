@@ -39,7 +39,7 @@ export class TextureTiledLayer extends ThreeTiledLayer {
       minZoom: options.minZoom ?? 0, 
       maxZoom: options.maxZoom ?? 22,
 
-      tileMaterialSetFunction: (tileIndex: TileIndex) => {
+      onSetTileMaterial: (tileIndex: TileIndex) => {
         const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`
 
         let texture: Texture;
@@ -85,7 +85,7 @@ export class TextureTiledLayer extends ThreeTiledLayer {
 
 
 
-      tileMaterialUpdateFunction: (tileIndex: TileIndex, material: Material) => {
+      onTileUpdate: (tileIndex: TileIndex, material: Material) => {
         const m = material as MeshBasicMaterial;
 
         const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`

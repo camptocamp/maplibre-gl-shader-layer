@@ -4,35 +4,27 @@
  */
 
 
-import { DoubleSide, type Material, MeshBasicMaterial, type Texture, TextureLoader, RawShaderMaterial, Uniform, Vector3, Vector4, Matrix4 } from "three";
-import { type Mat4, ThreeTiledLayer } from "./ThreeTiledLayer";
+import { DoubleSide, RawShaderMaterial, Uniform, Vector4 } from "three";
+import { ThreeTiledLayer } from "./ThreeTiledLayer";
 // @ts-ignore
 import vertexShader from "./shaders/demo.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/demo.f.glsl?raw";
-import { splitMatrix, type TileIndex } from "./tools";
-
-
+import type { TileIndex } from "./tools";
 
 
 export class RawShaderTiledLayer extends ThreeTiledLayer {
-
-
   constructor(id: string) {
-
-    
-
 
     super(id, {
 
-      tileMaterialSetFunction: (tileIndex: TileIndex) => {
+      onSetTileMaterial: (tileIndex: TileIndex) => {
+        console.log("Creating material for tile at ", tileIndex);
+        
 
         const shader = new RawShaderMaterial({
           uniforms: {
             color: new Uniform(new Vector4(1, 0, 0, 1)),
-            highProjMatrix: new Uniform(new Matrix4()),
-            lowProjMatrix: new Uniform(new Matrix4()),
-            basicProjMatrix: new Uniform(new Matrix4()),
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -47,21 +39,9 @@ export class RawShaderTiledLayer extends ThreeTiledLayer {
 
 
 
-      tileMaterialUpdateFunction: (tileIndex: TileIndex, material: Material, matrix: Mat4) => {
-        const mtl = material as RawShaderMaterial;
+      // onTileUpdate: (tile: Tile, matrix: Mat4) => {
 
-        // Computing high and low matrix + passing them as uniforms
-        const { highMatrix, lowMatrix } = splitMatrix(matrix);
-        console.log("highMatrix", highMatrix);
-        console.log("lowMatrix", lowMatrix);
-        
-
-        
-        mtl.uniforms.highProjMatrix.value = new Matrix4().fromArray(highMatrix);
-        mtl.uniforms.lowProjMatrix.value = new Matrix4().fromArray(lowMatrix);
-        mtl.uniforms.basicProjMatrix.value = new Matrix4().fromArray(matrix);
-        
-      }
+      // }
 
     });
 

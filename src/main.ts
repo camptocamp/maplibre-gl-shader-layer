@@ -23,7 +23,7 @@ async function init() {
 
   const tiledLayer = new ThreeTiledLayer("some layer", {
     // This function updates the tiling color and layout based on map settings and tile index
-    tileMaterialUpdateFunction: (tileIndex: TileIndex, material: Material) => {
+    onTileUpdate: (tileIndex: TileIndex, material: Material) => {
       const z = map.getZoom();
       const pitch = map.getPitch();
       const bearing = map.getBearing();
