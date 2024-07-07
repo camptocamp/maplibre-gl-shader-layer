@@ -11,8 +11,17 @@ import {
   Scene,
   WebGLRenderer,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, splitFloat64ToFloat32, clampInt32 } from "./tools";
+import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList } from "./tools";
 import { Tile } from "./Tile";
+
+
+/**
+ * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
+ * - FLOOR: tileZ = floor(mapZ) => fairly low resolution tile, a tile can take up to most of the viewport
+ * - ROUND: tileZ = round(mapZ) => medium resoltuion, tiles are smaller on screen
+ * - CEIL: tileZ = ceil(mapZ) => the highest resolution, +1 Z compared to FLOOR
+ */
+export type TileZoomFitting = "FLOOR" | "ROUND" | "CEIL";
 
 export type Mat4 =
   | [
@@ -80,6 +89,8 @@ export type ThreeTiledLayerOptions = {
    * Function to update the material of a tile Mesh when a tile is rendered
    */
   onTileUpdate?: UpdateTileMaterialFunction;
+
+  tileZoomFitting?: TileZoomFitting;
 };
 
 export class ThreeTiledLayer implements CustomLayerInterface {
@@ -101,6 +112,7 @@ export class ThreeTiledLayer implements CustomLayerInterface {
   protected tilePool: Tile[] = [];
   protected onSetTileMaterial: SetTileMaterialFunction | null = null;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
+  private tileZoomFittingFunction: (v: number) => number = Math.round;
 
   constructor(id: string, options?: ThreeTiledLayerOptions) {
     this.id = id;
@@ -111,6 +123,14 @@ export class ThreeTiledLayer implements CustomLayerInterface {
     this.showBeyondMaxZoom = options?.showBeyondMaxZoom ?? true;
     this.onSetTileMaterial = options?.onSetTileMaterial ?? null;
     this.onTileUpdate = options?.onTileUpdate ?? null;
+
+    if (options && options.tileZoomFitting) {
+      if (options.tileZoomFitting === "CEIL") {
+        this.tileZoomFittingFunction = Math.ceil;
+      } else if (options.tileZoomFitting === "FLOOR") {
+        this.tileZoomFittingFunction = Math.floor;
+      }
+    }
   }
 
   protected initScene() {
@@ -137,7 +157,7 @@ export class ThreeTiledLayer implements CustomLayerInterface {
    * The returned value is an integer.
    */
   protected getAppropriateZoomLevel(): number {
-    const current = Math.floor(this.map.getZoom());
+    const current = this.tileZoomFittingFunction(this.map.getZoom());
     if (current < this.minZoom) return this.minZoom;
     if (current > this.maxZoom) return this.maxZoom;
     return current;
