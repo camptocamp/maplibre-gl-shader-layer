@@ -4,27 +4,28 @@
  */
 
 
-import { DoubleSide, RawShaderMaterial, Uniform, Vector4 } from "three";
-import { ThreeTiledLayer } from "./ThreeTiledLayer";
+import { DoubleSide, GLSL3, RawShaderMaterial, Uniform, Vector4 } from "three";
+import { type Mat4, ThreeTiledLayer } from "./ThreeTiledLayer";
 // @ts-ignore
-import vertexShader from "./shaders/demo.v.glsl?raw";
+import vertexShader from "./shaders/dummy-gradient.v.glsl?raw";
 // @ts-ignore
-import fragmentShader from "./shaders/demo.f.glsl?raw";
+import fragmentShader from "./shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "./tools";
+import type { Tile } from "./Tile";
 
 
-export class RawShaderTiledLayer extends ThreeTiledLayer {
+export class DummyGradientTiledLayer extends ThreeTiledLayer {
   constructor(id: string) {
-
     super(id, {
-
       onSetTileMaterial: (tileIndex: TileIndex) => {
-        console.log("Creating material for tile at ", tileIndex);
-        
-
         const shader = new RawShaderMaterial({
+          // This automatically adds the top-level instruction:
+          // #version 300 es
+          glslVersion: GLSL3,
+
           uniforms: {
             color: new Uniform(new Vector4(1, 0, 0, 1)),
+            zoom: { value: this.map.getZoom() },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -39,9 +40,9 @@ export class RawShaderTiledLayer extends ThreeTiledLayer {
 
 
 
-      // onTileUpdate: (tile: Tile, matrix: Mat4) => {
-
-      // }
+      onTileUpdate: (tile: Tile, matrix: Mat4) => {
+        (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();
+      }
 
     });
 

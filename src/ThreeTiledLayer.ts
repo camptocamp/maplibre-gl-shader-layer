@@ -1,15 +1,14 @@
-import { type CustomLayerInterface, CustomRenderMethod, MercatorCoordinate } from "@maptiler/sdk";
+import type { CustomLayerInterface } from "@maptiler/sdk";
 import type { Map as SDKMap } from "@maptiler/sdk";
 import {
   Camera,
-  DoubleSide,
-  type Material,
   Matrix4,
-  MeshBasicMaterial,
+  type MeshBasicMaterial,
   Object3D,
   PlaneGeometry,
   Scene,
   WebGLRenderer,
+  type RawShaderMaterial,
 } from "three";
 import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList } from "./tools";
 import { Tile } from "./Tile";
@@ -47,11 +46,11 @@ export type Mat4 =
 /**
  * Function to assign a material to a tile Mesh
  */
-type SetTileMaterialFunction = (tileIndex: TileIndex) => Material;
+type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
 
 /**
  * Function to update the material of a tile Mesh.
- * The mattrix is the one matrix provided by MapLibre
+ * The matrix is the one matrix provided by MapLibre
  */
 type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void;
 
@@ -83,7 +82,7 @@ export type ThreeTiledLayerOptions = {
   /**
    * Function to assign a material to a tile Mesh at the moment a new Tile instance needs to be created
    */
-  onSetTileMaterial?: SetTileMaterialFunction;
+  onSetTileMaterial: SetTileMaterialFunction;
 
   /**
    * Function to update the material of a tile Mesh when a tile is rendered
@@ -110,19 +109,19 @@ export class ThreeTiledLayer implements CustomLayerInterface {
   protected showBeyondMaxZoom: boolean;
   protected shouldShowCurrent!: boolean;
   protected tilePool: Tile[] = [];
-  protected onSetTileMaterial: SetTileMaterialFunction | null = null;
+  protected onSetTileMaterial: SetTileMaterialFunction;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.round;
 
-  constructor(id: string, options?: ThreeTiledLayerOptions) {
+  constructor(id: string, options: ThreeTiledLayerOptions) {
     this.id = id;
     this.initScene();
-    this.minZoom = options?.minZoom ?? 0;
-    this.maxZoom = options?.maxZoom ?? 22;
-    this.showBelowMinZoom = options?.showBelowMinZoom ?? false;
-    this.showBeyondMaxZoom = options?.showBeyondMaxZoom ?? true;
-    this.onSetTileMaterial = options?.onSetTileMaterial ?? null;
-    this.onTileUpdate = options?.onTileUpdate ?? null;
+    this.minZoom = options.minZoom ?? 0;
+    this.maxZoom = options.maxZoom ?? 22;
+    this.showBelowMinZoom = options.showBelowMinZoom ?? false;
+    this.showBeyondMaxZoom = options.showBeyondMaxZoom ?? true;
+    this.onSetTileMaterial = options.onSetTileMaterial;
+    this.onTileUpdate = options.onTileUpdate ?? null;
 
     if (options && options.tileZoomFitting) {
       if (options.tileZoomFitting === "CEIL") {
@@ -133,25 +132,16 @@ export class ThreeTiledLayer implements CustomLayerInterface {
     }
   }
 
+
   protected initScene() {
     this.camera = new Camera();
     this.scene = new Scene();
     this.tileContainer = new Object3D();
     this.scene.add(this.tileContainer);
     this.tileGeometry = new PlaneGeometry(1, 1);
-
-    // this.camera.matrixAutoUpdate = false;
-
-    this.debugMaterial = new MeshBasicMaterial({
-      color: 0xff0000,
-      wireframe: false,
-      side: DoubleSide,
-      transparent: true,
-      opacity: 0.5,
-      depthTest: false,
-    });
   }
 
+  
   /**
    * Compute the correct zoom level based on the map zoom level and the provided options.
    * The returned value is an integer.
@@ -209,12 +199,8 @@ export class ThreeTiledLayer implements CustomLayerInterface {
 
       if (this.tilePool.length >= i + 1) {
         tile = this.tilePool[i];
-
-        
       } else {
-        const material = this.onSetTileMaterial
-          ? this.onSetTileMaterial(tileIndex)
-          : this.debugMaterial.clone();
+        const material = this.onSetTileMaterial(tileIndex);
         tile = new Tile(this.tileGeometry, material);
         this.tilePool.push(tile);
       }
