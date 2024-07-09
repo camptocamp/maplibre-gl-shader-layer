@@ -1,11 +1,11 @@
 /**
- * This is a demo of how to extend ThreeTiledLayer
+ * This is a demo of how to extend ShaderTiledLayer
  * RawShaderTiledLayer is a layer that simply contains a texture per tile
  */
 
 
 import { DoubleSide, GLSL3, RawShaderMaterial, Uniform, Vector4 } from "three";
-import { type Mat4, ThreeTiledLayer } from "./ThreeTiledLayer";
+import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 // @ts-ignore
 import vertexShader from "./shaders/dummy-gradient.v.glsl?raw";
 // @ts-ignore
@@ -14,7 +14,7 @@ import type { TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 
 
-export class DummyGradientTiledLayer extends ThreeTiledLayer {
+export class DummyGradientTiledLayer extends ShaderTiledLayer {
   constructor(id: string) {
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {

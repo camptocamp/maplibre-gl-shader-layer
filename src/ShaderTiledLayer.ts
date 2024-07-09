@@ -54,7 +54,7 @@ type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
  */
 type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void;
 
-export type ThreeTiledLayerOptions = {
+export type ShaderTiledLayerOptions = {
   /**
    * Default: 0
    */
@@ -92,7 +92,7 @@ export type ThreeTiledLayerOptions = {
   tileZoomFitting?: TileZoomFitting;
 };
 
-export class ThreeTiledLayer implements CustomLayerInterface {
+export class ShaderTiledLayer implements CustomLayerInterface {
   public id: string;
   public readonly type = "custom";
   public renderingMode: "2d" | "3d" = "3d";
@@ -113,7 +113,7 @@ export class ThreeTiledLayer implements CustomLayerInterface {
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.round;
 
-  constructor(id: string, options: ThreeTiledLayerOptions) {
+  constructor(id: string, options: ShaderTiledLayerOptions) {
     this.id = id;
     this.initScene();
     this.minZoom = options.minZoom ?? 0;

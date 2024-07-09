@@ -1,7 +1,7 @@
 import "@maptiler/sdk/dist/maptiler-sdk.css";
 import "./style.css";
 import { config, Map as SDKMap } from "@maptiler/sdk";
-import { ThreeTiledLayer } from "./ThreeTiledLayer";
+import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import type { TileIndex } from "./tools";
 import { Color, type Material, type MeshBasicMaterial } from "three";
 import { TextureTiledLayer } from "./TextureTiledLayer";
@@ -21,7 +21,7 @@ import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 
 //   // map.showTileBoundaries = true;
 
-//   const tiledLayer = new ThreeTiledLayer("some layer", {
+//   const tiledLayer = new ShaderTiledLayer("some layer", {
 //     // This function updates the tiling color and layout based on map settings and tile index
 //     onTileUpdate: (tileIndex: TileIndex, material: Material) => {
 //       const z = map.getZoom();

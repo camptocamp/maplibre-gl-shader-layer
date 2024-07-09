@@ -1,5 +1,5 @@
 import { type Map as SDKMap, MercatorCoordinate } from "@maptiler/sdk";
-import { Mat4 } from "./ThreeTiledLayer";
+import { Mat4 } from "./ShaderTiledLayer";
 
 export type TileIndex = {
   z: number;

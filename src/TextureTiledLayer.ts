@@ -1,11 +1,11 @@
 /**
- * This is a demo of how to extend ThreeTiledLayer
+ * This is a demo of how to extend ShaderTiledLayer
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
 
 import QuickLRU from "quick-lru";
 import { DoubleSide, type Material, MeshBasicMaterial, type Texture, TextureLoader } from "three";
-import { ThreeTiledLayer } from "./ThreeTiledLayer";
+import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import type { TileIndex } from "./tools";
 
 export type TextureTiledLayerOptions = {
@@ -15,7 +15,7 @@ export type TextureTiledLayerOptions = {
 }
 
 
-export class TextureTiledLayer extends ThreeTiledLayer {
+export class TextureTiledLayer extends ShaderTiledLayer {
   private textureUrlPattern: string;
   private textureLoader: TextureLoader = new TextureLoader();
   private texturePool: QuickLRU<string, Texture> = new QuickLRU({
