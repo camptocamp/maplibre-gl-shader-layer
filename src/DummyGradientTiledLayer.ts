@@ -18,13 +18,12 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
   constructor(id: string) {
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {
-        const shader = new RawShaderMaterial({
+        const material = new RawShaderMaterial({
           // This automatically adds the top-level instruction:
           // #version 300 es
           glslVersion: GLSL3,
 
           uniforms: {
-            color: new Uniform(new Vector4(1, 0, 0, 1)),
             zoom: { value: this.map.getZoom() },
           },
           vertexShader: vertexShader,
@@ -35,7 +34,7 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
           // wireframe: true,
         })
         
-        return shader;
+        return material;
       },
 
 

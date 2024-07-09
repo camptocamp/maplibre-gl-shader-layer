@@ -4,9 +4,14 @@
  */
 
 import QuickLRU from "quick-lru";
-import { DoubleSide, type Material, MeshBasicMaterial, type Texture, TextureLoader } from "three";
-import { ShaderTiledLayer } from "./ShaderTiledLayer";
+import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, Uniform, Vector4 } from "three";
+import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 import type { TileIndex } from "./tools";
+import type { Tile } from "./Tile";
+// @ts-ignore
+import vertexShader from "./shaders/texture-tile.v.glsl?raw";
+// @ts-ignore
+import fragmentShader from "./shaders/texture-tile.f.glsl?raw";
 
 export type TextureTiledLayerOptions = {
   minZoom?: number,
@@ -17,12 +22,11 @@ export type TextureTiledLayerOptions = {
 
 export class TextureTiledLayer extends ShaderTiledLayer {
   private textureUrlPattern: string;
-  private textureLoader: TextureLoader = new TextureLoader();
   private texturePool: QuickLRU<string, Texture> = new QuickLRU({
     // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     maxSize: 50,
 
-    onEviction(key: string, value: Texture) {
+    onEviction(_key: string, value: Texture) {
       console.log("freeing texture GPU memory");
       value.dispose();
     },
@@ -40,94 +44,71 @@ export class TextureTiledLayer extends ShaderTiledLayer {
       maxZoom: options.maxZoom ?? 22,
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
-        const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`
-
-        let texture: Texture;
         
-        if (this.texturePool.has(textureId)) {
-          texture = this.texturePool.get(textureId) as Texture;
-        } else {
-          const textureURL = this.textureUrlPattern.replace("{x}", tileIndex.x.toString())
-            .replace("{y}", tileIndex.y.toString())
-            .replace("{z}", tileIndex.z.toString());
+        const texture = this.getTexture(tileIndex);
 
-          // texture = this.textureLoader.load(
-          texture = new TextureLoader().load(
-            textureURL,
-            
-            ( texture ) => {
-              // console.log("SUCESS");
-              
-            },
-          
-            // onProgress callback currently not supported
-            undefined,
-          
-            // onError callback
-            ( err ) => {
-              console.error( 'An error happened.' );
-            }
-          );
-          texture.flipY = false;
-          this.texturePool.set(textureId, texture);
-        }
+        const material = new RawShaderMaterial({
+          // This automatically adds the top-level instruction:
+          // #version 300 es
+          glslVersion: GLSL3,
 
-        const material = new MeshBasicMaterial({
-          // color: 0xff0000,
+          uniforms: {
+            tex: { value: texture },
+          },
+          vertexShader: vertexShader,
+          fragmentShader: fragmentShader,
           side: DoubleSide,
-          // transparent: true,
-          // opacity: 0.5,
+					transparent: true,
           depthTest: false,
-          map: texture,
-        });
+          // wireframe: true,
+        })
+
         return material;
       },
 
 
-
-      onTileUpdate: (tileIndex: TileIndex, material: Material) => {
-        const m = material as MeshBasicMaterial;
-
-        const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`
-
-        let texture: Texture;
-        
-        if (this.texturePool.has(textureId)) {
-          texture = this.texturePool.get(textureId) as Texture;
-        } else {
-          const textureURL = this.textureUrlPattern.replace("{x}", tileIndex.x.toString())
-            .replace("{y}", tileIndex.y.toString())
-            .replace("{z}", tileIndex.z.toString());
-          
-          // texture = this.textureLoader.load(
-          texture = new TextureLoader().load(
-            textureURL,
-            
-            ( texture ) => {
-              // console.log("SUCESS");
-              
-            },
-          
-            // onProgress callback currently not supported
-            undefined,
-          
-            // onError callback
-            ( err ) => {
-              console.error( 'An error happened.' );
-            }
-          );
-          texture.flipY = false;
-          this.texturePool.set(textureId, texture);
-        }
-
-        m.map = texture;
-        m.needsUpdate = true;
+      onTileUpdate: (tile: Tile, matrix: Mat4) => {
+        tile.material.uniforms.tex.value = this.getTexture(tile.getTileIndex());
       }
-
     });
 
     this.textureUrlPattern = options.textureUrlPattern;
   }
 
+
+  private getTexture(tileIndex: TileIndex): Texture {
+    const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`
+
+    let texture: Texture;
+    
+    if (this.texturePool.has(textureId)) {
+      texture = this.texturePool.get(textureId) as Texture;
+    } else {
+      const textureURL = this.textureUrlPattern.replace("{x}", tileIndex.x.toString())
+        .replace("{y}", tileIndex.y.toString())
+        .replace("{z}", tileIndex.z.toString());
+
+      // texture = this.textureLoader.load(
+      texture = new TextureLoader().load(
+        textureURL,
+        
+        ( texture ) => {
+          // console.log("SUCESS");
+        },
+      
+        // onProgress callback currently not supported
+        undefined,
+      
+        // onError callback
+        ( err ) => {
+          console.error( 'An error happened.' );
+        }
+      );
+      texture.flipY = false;
+      this.texturePool.set(textureId, texture);
+    }
+
+    return texture;
+  }
 
 }

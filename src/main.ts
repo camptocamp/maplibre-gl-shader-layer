@@ -44,28 +44,28 @@ import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 // init();
 
 
-// async function init2() {
-//   const container = document.getElementById("map");
+async function init2() {
+  const container = document.getElementById("map");
 
-//   if (!container) throw new Error('There is no div with the id: "map" ');
+  if (!container) throw new Error('There is no div with the id: "map" ');
 
-//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-//   const map = new SDKMap({ container, hash: true, terrainControl: true });
+  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+  const map = new SDKMap({ container, hash: true, terrainControl: true });
 
-//   await map.onReadyAsync();
+  await map.onReadyAsync();
 
-//   console.log("map", map);
+  console.log("map", map);
 
-//   map.showTileBoundaries = true;
+  map.showTileBoundaries = true;
 
-//   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
+  const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
 
-//   const textureTiledLayer = new TextureTiledLayer("some layer", {
-//     textureUrlPattern: satelliteUrlPattern,
-//   });
+  const textureTiledLayer = new TextureTiledLayer("some layer", {
+    textureUrlPattern: satelliteUrlPattern,
+  });
 
-//   map.addLayer(textureTiledLayer);
-// }
+  map.addLayer(textureTiledLayer);
+}
 
 
 
@@ -88,4 +88,4 @@ async function init3() {
   map.addLayer(textureTiledLayer);
 }
 
-init3();
+init2();
