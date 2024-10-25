@@ -3,6 +3,7 @@ precision highp int;
 
 uniform sampler2D tex;
 uniform float zoom;
+uniform float zoomTile;
 
 in vec2 vPositionUnit;
 out vec4 fragColor;
@@ -29,21 +30,28 @@ void main()  {
   // vec2 centerPixelCoords = floor(vPositionUnit * textureSize) * textureSize;
   // vec4 texDataCenterPixel = texture(tex, centerPixelCoords);
   // int countryCode = int((texDataCenterPixel.b * 256. + texDataCenterPixel.a) * 255.);  
-  int countryCode = int((texData.b * 256. + texData.a) * 255.);  
+  int countryCode = int((texData.b * 256. + texData.a) * 255.);
 
-  float shortDistance = distance256 * 5.;
+  float zoomToTileZoomCompensation = 1. + zoom - zoomTile;
 
-  // if (shortDistance < .01) {
+  float range = distance256 * 10. * zoomToTileZoomCompensation;
+
+  // fragColor = vec4(1., 0., 0., range);
+  // return;
+  
+
+  // if (range < .01) {
   //   fragColor = vec4(1., 0., 0., 0.5);
   //   return;
   // }
 
-  if (shortDistance < .01 || shortDistance >= 1. || countryCode != 0) {
+  if (range < .01 || range >= 1. || countryCode != 0) {
     discard;
     return;
   }
 
-  float shade = cos(shortDistance * 200.) * (1. - shortDistance) * 0.4;
+  // float shade = cos(range * 200.) * (1. - range) * 0.4;
+  float shade = cos(range * 75.) * (1. - range) * 0.5;
 
   vec3 waveColor = vec3(0., 99., 229.) / 255.;
 

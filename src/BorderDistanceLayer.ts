@@ -53,6 +53,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
           uniforms: {
             tex: { value: texture },
             zoom: { value: this.map.getZoom() },
+            zoomTile: { value: tileIndex.z },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -72,6 +73,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
         const mat = tile.material as RawShaderMaterial;
         mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
         mat.uniforms.zoom.value = this.map.getZoom();
+        mat.uniforms.zoomTile.value = tile.getTileIndex().z;
       },
       
       tileZoomFitting: "FLOOR",

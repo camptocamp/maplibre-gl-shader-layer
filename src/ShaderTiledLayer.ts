@@ -180,10 +180,15 @@ export class ShaderTiledLayer implements CustomLayerInterface {
     // The candidates are strictly based on axis-align bounding box, so when map is pitched and rotated,
     // the list of candidates needs to be pruned from all the tiles that are not in viewport
     const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
+
+    if (this.map.getZoom() >= z) {
+      return tileIndicesCandidates;
+    }
+
     const canvas = this.map.getCanvas();
     const canvasWidth = canvas.clientWidth;
     const canvasHeight = canvas.clientHeight;
-    const tileIndicesFiltered = tileIndicesCandidates.filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight));
+    const tileIndicesFiltered = tileIndicesCandidates.filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight));    
     return tileIndicesFiltered;
   }
 
