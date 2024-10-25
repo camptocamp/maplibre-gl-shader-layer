@@ -10,7 +10,7 @@ import {
   WebGLRenderer,
   type RawShaderMaterial,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList } from "./tools";
+import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport } from "./tools";
 import { Tile } from "./Tile";
 
 
@@ -177,8 +177,16 @@ export class ShaderTiledLayer implements CustomLayerInterface {
   protected listTilesIndicesForMapBounds() {
     const z = this.getAppropriateZoomLevel();
     const tbu = getTileBoundsUnwrapped(this.map, z);
-    return tileBoundsUnwrappedToTileList(tbu);
+    // The candidates are strictly based on axis-align bounding box, so when map is pitched and rotated,
+    // the list of candidates needs to be pruned from all the tiles that are not in viewport
+    const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
+    const canvas = this.map.getCanvas();
+    const canvasWidth = canvas.clientWidth;
+    const canvasHeight = canvas.clientHeight;
+    const tileIndicesFiltered = tileIndicesCandidates.filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight));
+    return tileIndicesFiltered;
   }
+
 
   onRemove(map: SDKMap, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     console.warn("not implemented yet");

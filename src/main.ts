@@ -82,7 +82,7 @@ async function init3() {
 
   console.log("map", map);
 
-  // map.showTileBoundaries = true;
+  map.showTileBoundaries = true;
 
   const textureTiledLayer = new DummyGradientTiledLayer("some layer");
 

@@ -1,4 +1,4 @@
-import { type Map as SDKMap, MercatorCoordinate } from "@maptiler/sdk";
+import { type Map as SDKMap, MercatorCoordinate, MercatorCoordinate, MercatorCoordinate } from "@maptiler/sdk";
 import { Mat4 } from "./ShaderTiledLayer";
 
 export type TileIndex = {
@@ -93,7 +93,7 @@ export function getTileBoundsUnwrapped(map: SDKMap, z: number): TileBoundsUnwrap
   };
 }
 
-export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileIndex[] {
+export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileIndex[] {  
   const allTileIndices: TileIndex[] = [];
   const z = tbu.min.z;
 
@@ -126,4 +126,83 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
     y: tileIndex.y,
     z: tileIndex.z,
   } as TileIndex;
+}
+
+
+function tileIndexToMercatorCenterAndSize(ti: TileIndex): {mercCenter: MercatorCoordinate, mercSize: number} {
+  const nbTiles = 2 ** ti.z;
+  const mercSize = 1 / nbTiles;
+  const mercCenter = new MercatorCoordinate(
+    ti.x * mercSize + mercSize / 2,
+    ti.y * mercSize + mercSize / 2,
+  );
+
+  return {
+    mercSize,
+    mercCenter,
+  }
+}
+
+/**
+ * Checks if the center and the corners of a tile are visible in viewport
+ */
+export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: number, mapCanvasHeight: number): boolean {
+  const {mercCenter, mercSize} = tileIndexToMercatorCenterAndSize(ti);
+
+  // using a 5% margin around the 
+  const canvasMarginW = mapcanvasWidth * 0.05;
+  const canvasMarginH = mapCanvasHeight * 0.05;
+  const mapCanvasWidthLowerBound = -canvasMarginW;
+  const mapCanvasWidthUpperBound = mapcanvasWidth + canvasMarginW;
+  const mapCanvasHeightLowerBound = -canvasMarginH;
+  const mapCanvasHeightUpperBound = mapCanvasHeight + canvasMarginH;  
+  let screenPos = map.project(mercCenter.toLngLat());
+
+  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+    return true;
+  }
+
+  const halfMercSize = mercSize / 2;
+  const mercTopLeft = new MercatorCoordinate(
+    mercCenter.x - halfMercSize,
+    mercCenter.y - halfMercSize,
+  );
+  screenPos = map.project(mercTopLeft.toLngLat());
+
+  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+    return true;
+  }
+
+
+  const mercTopRight = new MercatorCoordinate(
+    mercCenter.x + halfMercSize,
+    mercCenter.y - halfMercSize,
+  );
+  screenPos = map.project(mercTopRight.toLngLat());
+
+  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+    return true;
+  }
+
+  const mercBottomLeft = new MercatorCoordinate(
+    mercCenter.x - halfMercSize,
+    mercCenter.y + halfMercSize,
+  );
+  screenPos = map.project(mercBottomLeft.toLngLat());
+
+  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+    return true;
+  }
+
+  const mercBottomRight = new MercatorCoordinate(
+    mercCenter.x + halfMercSize,
+    mercCenter.y + halfMercSize,
+  );
+  screenPos = map.project(mercBottomRight.toLngLat());
+
+  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+    return true;
+  }
+
+  return false
 }
