@@ -109,6 +109,8 @@ export class ShaderTiledLayer implements CustomLayerInterface {
   protected showBeyondMaxZoom: boolean;
   protected shouldShowCurrent!: boolean;
   protected tilePool: Tile[] = [];
+  protected usedTileMap = new Map<string, Tile>();
+  protected unusedTileList: Array<Tile> = [];
   protected onSetTileMaterial: SetTileMaterialFunction;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.round;
@@ -183,36 +185,101 @@ export class ShaderTiledLayer implements CustomLayerInterface {
   }
 
   prerender(gl: WebGLRenderingContext | WebGL2RenderingContext, matrix: Mat4) {
+    // console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
+    
     this.shouldShowCurrent = this.shouldShow();
 
     // Escape if not rendering
     if (!this.shouldShowCurrent) return;
 
-    // Brutte force flush the tile container (Object3D) and refill it with tiles from the pool
+    // Brute force flush the tile container (Object3D) and refill it with tiles from the pool
     this.tileContainer.clear();
     const allTileIndices = this.listTilesIndicesForMapBounds();
+    // console.log(allTileIndices);
+
+
+    const tilesToAdd = [];
+    const usedTileMapPrevious = this.usedTileMap;
+    const usedTileMapNew = new Map<string, Tile>();
+
 
     for (let i = 0; i < allTileIndices.length; i += 1) {
       const tileIndex = allTileIndices[i];
+      const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
+
+      const tile = usedTileMapPrevious.get(tileID);
+      if (tile) {
+        // This tile is already in the pool
+        usedTileMapNew.set(tileID, tile);
+
+        // Removing it from the previous map so that only remains the unused ones
+        usedTileMapPrevious.delete(tileID);
+
+        this.tileContainer.add(tile);
+
+        if (this.onTileUpdate) {
+          // console.log("keep");
+          this.onTileUpdate(tile, matrix);
+        }
+      } else {
+        // This tile is not in the pool
+        tilesToAdd.push(tileIndex);
+      }
+    }
+
+    this.unusedTileList.push(...Array.from(usedTileMapPrevious.values()));
+
+    for (let i = 0; i < tilesToAdd.length; i += 1) {
+      const tileIndex = tilesToAdd[i];
+      const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       let tile: Tile;
 
-      if (this.tilePool.length >= i + 1) {
-        tile = this.tilePool[i];
+      if (this.unusedTileList.length > 0) {
+        tile = this.unusedTileList.pop() as Tile;
       } else {
         const material = this.onSetTileMaterial(tileIndex);
         tile = new Tile(this.tileGeometry, material);
-        this.tilePool.push(tile);
       }
 
+      usedTileMapNew.set(tileID, tile);
       tile.setTileIndex(tileIndex);
       this.tileContainer.add(tile);
       
       if (this.onTileUpdate) {
+        // console.log("repurposed");
         this.onTileUpdate(tile, matrix);
       }
-      
     }
+
+    this.usedTileMap = usedTileMapNew;
+
+
+
+
+
+    // console.time("v0")
+    // for (let i = 0; i < allTileIndices.length; i += 1) {
+    //   const tileIndex = allTileIndices[i];
+    //   let tile: Tile;
+
+    //   if (this.tilePool.length >= i + 1) {
+    //     tile = this.tilePool[i];
+    //   } else {
+    //     const material = this.onSetTileMaterial(tileIndex);
+    //     tile = new Tile(this.tileGeometry, material);
+    //     this.tilePool.push(tile);
+    //   }
+
+    //   tile.setTileIndex(tileIndex);
+    //   this.tileContainer.add(tile);
+      
+    //   if (this.onTileUpdate) {
+    //     this.onTileUpdate(tile, matrix);
+    //   }
+    // }
+    // console.timeEnd("v0")
+    
   }
 
   render(gl: WebGLRenderingContext | WebGL2RenderingContext, matrix: Mat4) {

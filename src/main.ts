@@ -6,6 +6,7 @@ import type { TileIndex } from "./tools";
 import { Color, type Material, type MeshBasicMaterial } from "three";
 import { TextureTiledLayer } from "./TextureTiledLayer";
 import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
+import { BorderDistanceLayer } from "./BorderDistanceLayer";
 
 // async function init() {
 //   const container = document.getElementById("map");
@@ -88,4 +89,29 @@ async function init3() {
   map.addLayer(textureTiledLayer);
 }
 
-init2();
+
+async function init4() {
+  const container = document.getElementById("map");
+
+  if (!container) throw new Error('There is no div with the id: "map" ');
+
+  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+  const map = new SDKMap({ container, hash: true, terrainControl: true });
+
+  await map.onReadyAsync();
+
+  console.log("map", map);
+
+  map.showTileBoundaries = true;
+
+  const tileUrlPattern = "http://localhost:53485/{z}/{x}/{y}.png";
+
+  const borderDistanceLayer = new BorderDistanceLayer("some layer", {
+    textureUrlPattern: tileUrlPattern,
+  });
+
+  map.addLayer(borderDistanceLayer);
+}
+
+init4();
+

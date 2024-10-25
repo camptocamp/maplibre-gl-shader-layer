@@ -1,30 +1,28 @@
-/**
- * This is a demo of how to extend ShaderTiledLayer
- * TextureTiledLayer is a layer that simply contains a texture per tile
- */
+
 
 import QuickLRU from "quick-lru";
-import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, Uniform, Vector4 } from "three";
+import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3 } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
-import type { TileIndex } from "./tools";
+import { wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 // @ts-ignore
-import vertexShader from "./shaders/texture-tile.v.glsl?raw";
+import vertexShader from "./shaders/distance-tile.v.glsl?raw";
 // @ts-ignore
-import fragmentShader from "./shaders/texture-tile.f.glsl?raw";
+import fragmentShader from "./shaders/distance-tile.f.glsl?raw";
+import { Map } from "@maptiler/sdk";
 
-export type TextureTiledLayerOptions = {
+export type BorderDistanceLayerOptions = {
   minZoom?: number,
   maxZoom?: number,
   textureUrlPattern: string,
 }
 
 
-export class TextureTiledLayer extends ShaderTiledLayer {
+export class BorderDistanceLayer extends ShaderTiledLayer {
   private textureUrlPattern: string;
   private texturePool: QuickLRU<string, Texture> = new QuickLRU({
     // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-    maxSize: 100,
+    maxSize: 50,
 
     onEviction(_key: string, value: Texture) {
       console.log("freeing texture GPU memory");
@@ -36,12 +34,12 @@ export class TextureTiledLayer extends ShaderTiledLayer {
   // try to load them again and again
   private nonExistingTextures: Set<string> = new Set();
 
-  constructor(id: string, options: TextureTiledLayerOptions) {
+  constructor(id: string, options: BorderDistanceLayerOptions) {
 
 
     super(id, {
       minZoom: options.minZoom ?? 0, 
-      maxZoom: options.maxZoom ?? 22,
+      maxZoom: 8,
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
         
@@ -54,6 +52,7 @@ export class TextureTiledLayer extends ShaderTiledLayer {
 
           uniforms: {
             tex: { value: texture },
+            zoom: { value: this.map.getZoom() },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -68,25 +67,37 @@ export class TextureTiledLayer extends ShaderTiledLayer {
 
 
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
-        tile.material.uniforms.tex.value = this.getTexture(tile.getTileIndex());
+        // console.log("tile:", tile);
+        
+        const mat = tile.material as RawShaderMaterial;
+        mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
+        mat.uniforms.zoom.value = this.map.getZoom();
       }
     });
 
     this.textureUrlPattern = options.textureUrlPattern;
   }
 
+  // onAdd(map: Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+  //   super.onAdd(map, gl);
+  // }
+
 
   private getTexture(tileIndex: TileIndex): Texture {
-    const textureId = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`
+    const tileIndexWrapped = wrapTileIndex(tileIndex);
+    const textureId = `${tileIndexWrapped.z}_${tileIndexWrapped.x}_${tileIndexWrapped.y}`;
+
+    // console.log(textureId);
+    
 
     let texture: Texture;
     
     if (this.texturePool.has(textureId)) {
       texture = this.texturePool.get(textureId) as Texture;
     } else {
-      const textureURL = this.textureUrlPattern.replace("{x}", tileIndex.x.toString())
-        .replace("{y}", tileIndex.y.toString())
-        .replace("{z}", tileIndex.z.toString());
+      const textureURL = this.textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
+        .replace("{y}", tileIndexWrapped.y.toString())
+        .replace("{z}", tileIndexWrapped.z.toString());
 
       // texture = this.textureLoader.load(
       texture = new TextureLoader().load(
@@ -103,10 +114,10 @@ export class TextureTiledLayer extends ShaderTiledLayer {
         ( err ) => {
           console.error( 'An error happened.' );
         }
-      );
-      texture.flipY = false;
-      this.texturePool.set(textureId, texture);
+      );      
     }
+    texture.flipY = false;
+    this.texturePool.set(textureId, texture);
 
     return texture;
   }

@@ -115,3 +115,15 @@ export function tileIndexToMercatorPosition(ti: TileIndex): TileUnwrappedPositio
   };
 }
 
+export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
+  const nbTilePerAxis = 2 ** tileIndex.z;
+  let x = tileIndex.x % nbTilePerAxis;
+  if (x < 0) {
+    x = nbTilePerAxis + x ;
+  }
+  return {
+    x: x,
+    y: tileIndex.y,
+    z: tileIndex.z,
+  } as TileIndex;
+}
