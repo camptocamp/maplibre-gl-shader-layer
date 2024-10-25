@@ -113,7 +113,7 @@ export class ShaderTiledLayer implements CustomLayerInterface {
   protected unusedTileList: Array<Tile> = [];
   protected onSetTileMaterial: SetTileMaterialFunction;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
-  private tileZoomFittingFunction: (v: number) => number = Math.round;
+  private tileZoomFittingFunction: (v: number) => number = Math.floor;
 
   constructor(id: string, options: ShaderTiledLayerOptions) {
     this.id = id;
@@ -128,8 +128,8 @@ export class ShaderTiledLayer implements CustomLayerInterface {
     if (options && options.tileZoomFitting) {
       if (options.tileZoomFitting === "CEIL") {
         this.tileZoomFittingFunction = Math.ceil;
-      } else if (options.tileZoomFitting === "FLOOR") {
-        this.tileZoomFittingFunction = Math.floor;
+      } else if (options.tileZoomFitting === "ROUND") {
+        this.tileZoomFittingFunction = Math.round;
       }
     }
   }

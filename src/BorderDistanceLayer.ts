@@ -72,7 +72,9 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
         const mat = tile.material as RawShaderMaterial;
         mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
         mat.uniforms.zoom.value = this.map.getZoom();
-      }
+      },
+      
+      tileZoomFitting: "FLOOR",
     });
 
     this.textureUrlPattern = options.textureUrlPattern;
