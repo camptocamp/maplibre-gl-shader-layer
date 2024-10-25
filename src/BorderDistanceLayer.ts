@@ -15,6 +15,7 @@ export type BorderDistanceLayerOptions = {
   minZoom?: number,
   maxZoom?: number,
   textureUrlPattern: string,
+  animationSpeed?: number;
 }
 
 
@@ -33,6 +34,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
   // Set to store the "z_x_y" of textures that cannot be loaded, so that we don't
   // try to load them again and again
   private nonExistingTextures: Set<string> = new Set();
+  private animationSpeed = 0;
 
   constructor(id: string, options: BorderDistanceLayerOptions) {
 
@@ -54,6 +56,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
             tex: { value: texture },
             zoom: { value: this.map.getZoom() },
             zoomTile: { value: tileIndex.z },
+            phase: { value: 0 },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -79,7 +82,23 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
       tileZoomFitting: "FLOOR",
     });
 
+    
+
     this.textureUrlPattern = options.textureUrlPattern;
+
+
+    // enable animation, will have performance hit
+    this.animationSpeed = options.animationSpeed ?? 0;
+    if (this.animationSpeed > 0) {
+      // Force the map to render all the time
+      const animateFunction = () => {
+        if (!this.map) return;
+        this.map.redraw();
+        requestAnimationFrame(animateFunction);
+      }
+      requestAnimationFrame(animateFunction);
+    }
+    
   }
 
   // onAdd(map: Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
@@ -124,6 +143,18 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
     this.texturePool.set(textureId, texture);
 
     return texture;
+  }
+
+
+  prerender(gl: WebGLRenderingContext | WebGL2RenderingContext, matrix: Mat4) {
+    super.prerender(gl, matrix);
+    const allTiles = this.usedTileMap.values();
+
+    if (this.animationSpeed > 0) {
+      for(const tile of allTiles) {
+        (tile.material as RawShaderMaterial).uniforms.phase.value = this.animationSpeed * performance.now() / 350;
+      }
+    }
   }
 
 }

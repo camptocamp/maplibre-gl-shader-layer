@@ -108,6 +108,7 @@ async function init4() {
 
   const borderDistanceLayer = new BorderDistanceLayer("some layer", {
     textureUrlPattern: tileUrlPattern,
+    animationSpeed: 1,
   });
 
   map.addLayer(borderDistanceLayer);

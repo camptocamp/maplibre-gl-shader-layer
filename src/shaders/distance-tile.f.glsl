@@ -4,6 +4,7 @@ precision highp int;
 uniform sampler2D tex;
 uniform float zoom;
 uniform float zoomTile;
+uniform float phase;
 
 in vec2 vPositionUnit;
 out vec4 fragColor;
@@ -51,7 +52,7 @@ void main()  {
   }
 
   // float shade = cos(range * 200.) * (1. - range) * 0.4;
-  float shade = cos(range * 75.) * (1. - range) * 0.5;
+  float shade = cos(range * 75. - phase) * (1. - range) * 0.5;
 
   vec3 waveColor = vec3(0., 99., 229.) / 255.;
 
