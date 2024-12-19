@@ -1,7 +1,7 @@
 
 
 import QuickLRU from "quick-lru";
-import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3 } from "three";
+import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, FrontSide, BackSide } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 import { wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
@@ -9,7 +9,7 @@ import type { Tile } from "./Tile";
 import vertexShader from "./shaders/distance-tile.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/distance-tile.f.glsl?raw";
-import { Map } from "@maptiler/sdk";
+import type { CustomRenderMethodInput } from "maplibre-gl";
 
 export type BorderDistanceLayerOptions = {
   minZoom?: number,
@@ -60,7 +60,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
-          side: DoubleSide,
+          side: BackSide,
 					transparent: true,
           depthTest: false,
           // wireframe: true,
@@ -146,8 +146,8 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
   }
 
 
-  prerender(gl: WebGLRenderingContext | WebGL2RenderingContext, matrix: Mat4) {
-    super.prerender(gl, matrix);
+  prerender(gl: WebGLRenderingContext | WebGL2RenderingContext, options: CustomRenderMethodInput) {
+    super.prerender(gl, options);
     const allTiles = this.usedTileMap.values();
 
     if (this.animationSpeed > 0) {

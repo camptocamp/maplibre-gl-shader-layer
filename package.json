@@ -12,12 +12,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
+    "@types/mapbox__whoots-js": "^3.1.0",
     "@types/three": "^0.166.0",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   },
   "dependencies": {
-    "@maptiler/sdk": "^2.4.0",
+    "@mapbox/whoots-js": "^3.1.0",
+    "maplibre-gl": "file:../maplibre-gl-js/maplibre-gl-5.0.0-pre.10.tgz",
     "quick-lru": "^7.0.0",
     "three": "^0.166.1"
   }

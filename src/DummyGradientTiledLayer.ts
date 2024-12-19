@@ -31,7 +31,7 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
           side: DoubleSide,
 					transparent: true,
           depthTest: false,
-          // wireframe: true,
+          wireframe: true,
         })
         
         return material;

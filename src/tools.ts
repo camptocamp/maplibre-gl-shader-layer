@@ -1,4 +1,5 @@
-import { type Map as SDKMap, MercatorCoordinate, MercatorCoordinate, MercatorCoordinate } from "@maptiler/sdk";
+import maplibregl, { CoveringTilesOptions, CoveringZoomOptions, IMercatorCoordinate, IntersectionResult, IReadonlyTransform, MercatorCoordinate, Point, Point2D } from "maplibre-gl";
+import {getTileBBox} from '@mapbox/whoots-js';
 import { Mat4 } from "./ShaderTiledLayer";
 
 export type TileIndex = {
@@ -57,10 +58,10 @@ function mercatorToTileIndex(
 /**
  * Get the tile index
  */
-export function getTileBoundsUnwrapped(map: SDKMap, z: number): TileBoundsUnwrapped {
+export function getTileBoundsUnwrapped(map: maplibregl.Map, z: number): TileBoundsUnwrapped {
   const bounds = map.getBounds();
-  const nwMerc = MercatorCoordinate.fromLngLat(bounds.getNorthWest());
-  const seMerc = MercatorCoordinate.fromLngLat(bounds.getSouthEast());
+  const nwMerc = maplibregl.MercatorCoordinate.fromLngLat(bounds.getNorthWest());
+  const seMerc = maplibregl.MercatorCoordinate.fromLngLat(bounds.getSouthEast());
 
   // Y is always in [0, 1]
   const eps = 0.000001;
@@ -129,10 +130,10 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
 }
 
 
-function tileIndexToMercatorCenterAndSize(ti: TileIndex): {mercCenter: MercatorCoordinate, mercSize: number} {
+function tileIndexToMercatorCenterAndSize(ti: TileIndex): {mercCenter: maplibregl.MercatorCoordinate, mercSize: number} {
   const nbTiles = 2 ** ti.z;
   const mercSize = 1 / nbTiles;
-  const mercCenter = new MercatorCoordinate(
+  const mercCenter = new maplibregl.MercatorCoordinate(
     ti.x * mercSize + mercSize / 2,
     ti.y * mercSize + mercSize / 2,
   );
@@ -146,7 +147,7 @@ function tileIndexToMercatorCenterAndSize(ti: TileIndex): {mercCenter: MercatorC
 /**
  * Checks if the center and the corners of a tile are visible in viewport
  */
-export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: number, mapCanvasHeight: number): boolean {
+export function isTileInViewport(ti: TileIndex, map: maplibregl.Map, mapcanvasWidth: number, mapCanvasHeight: number): boolean {
   const {mercCenter, mercSize} = tileIndexToMercatorCenterAndSize(ti);
 
   // using a 5% margin around the 
@@ -163,7 +164,7 @@ export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: num
   }
 
   const halfMercSize = mercSize / 2;
-  const mercTopLeft = new MercatorCoordinate(
+  const mercTopLeft = new maplibregl.MercatorCoordinate(
     mercCenter.x - halfMercSize,
     mercCenter.y - halfMercSize,
   );
@@ -174,7 +175,7 @@ export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: num
   }
 
 
-  const mercTopRight = new MercatorCoordinate(
+  const mercTopRight = new maplibregl.MercatorCoordinate(
     mercCenter.x + halfMercSize,
     mercCenter.y - halfMercSize,
   );
@@ -184,7 +185,7 @@ export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: num
     return true;
   }
 
-  const mercBottomLeft = new MercatorCoordinate(
+  const mercBottomLeft = new maplibregl.MercatorCoordinate(
     mercCenter.x - halfMercSize,
     mercCenter.y + halfMercSize,
   );
@@ -194,7 +195,7 @@ export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: num
     return true;
   }
 
-  const mercBottomRight = new MercatorCoordinate(
+  const mercBottomRight = new maplibregl.MercatorCoordinate(
     mercCenter.x + halfMercSize,
     mercCenter.y + halfMercSize,
   );
@@ -205,4 +206,79 @@ export function isTileInViewport(ti: TileIndex, map: SDKMap, mapcanvasWidth: num
   }
 
   return false
+}
+
+
+
+export function tileBoundsUnwrappedToTileList2(map: maplibregl.Map): TileIndex[] {  
+  const zoom = Math.floor(map.getZoom());
+  return map.transform.coveringTiles({tileSize: 512}).filter(el => el.overscaledZ === zoom).map(el => {
+    return {
+      z: el.canonical.z,
+      x: el.canonical.x,
+      y: el.canonical.y
+    } as TileIndex;
+  })
+}
+
+
+/**
+ * Modulo function, as opposed to javascript's `%`, which is a remainder.
+ * This functions will return positive values, even if the first operand is negative.
+ */
+export function mod(n: number, m: number): number {
+  return ((n % m) + m) % m;
+}
+
+/**
+ * Projects a point within a tile to the surface of the unit sphere globe.
+ * @param inTileX - X coordinate inside the tile in range [0 .. 8192].
+ * @param inTileY - Y coordinate inside the tile in range [0 .. 8192].
+ * @param tileIdX - Tile's X coordinate in range [0 .. 2^zoom - 1].
+ * @param tileIdY - Tile's Y coordinate in range [0 .. 2^zoom - 1].
+ * @param tileIdZ - Tile's zoom.
+ * @returns A 3D vector - coordinates of the projected point on a unit sphere.
+ */
+export function projectTileCoordinatesToSphere(inTileX: number, inTileY: number, tileIdX: number, tileIdY: number, tileIdZ: number, nbSections: number): [number, number, number] {
+  // This code could be assembled from 3 fuctions, but this is a hot path for symbol placement,
+  // so for optimization purposes everything is inlined by hand.
+  //
+  // Non-inlined variant of this function would be this:
+  //     const mercator = tileCoordinatesToMercatorCoordinates(inTileX, inTileY, tileID);
+  //     const angular = mercatorCoordinatesToAngularCoordinatesRadians(mercator.x, mercator.y);
+  //     const sphere = angularCoordinatesRadiansToVector(angular[0], angular[1]);
+  //     return sphere;
+  const scale = 1.0 / (1 << tileIdZ);
+  const mercatorX = inTileX / nbSections * scale + tileIdX * scale;
+  const mercatorY = inTileY / nbSections * scale + tileIdY * scale;
+  const sphericalX = mod(mercatorX * Math.PI * 2.0 + Math.PI, Math.PI * 2);
+  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - (mercatorY * Math.PI * 2.0))) - Math.PI * 0.5;
+  const len = Math.cos(sphericalY);
+  return [
+    Math.sin(sphericalX) * len,
+    Math.sin(sphericalY),
+    Math.cos(sphericalX) * len
+  ]
+}
+
+export function projectTileCoordinatesToSphereUV(u: number, v: number, tileIdX: number, tileIdY: number, tileIdZ: number): [number, number, number] {
+  // This code could be assembled from 3 fuctions, but this is a hot path for symbol placement,
+  // so for optimization purposes everything is inlined by hand.
+  //
+  // Non-inlined variant of this function would be this:
+  //     const mercator = tileCoordinatesToMercatorCoordinates(inTileX, inTileY, tileID);
+  //     const angular = mercatorCoordinatesToAngularCoordinatesRadians(mercator.x, mercator.y);
+  //     const sphere = angularCoordinatesRadiansToVector(angular[0], angular[1]);
+  //     return sphere;
+  const scale = 1.0 / (1 << tileIdZ);
+  const mercatorX = u * scale + tileIdX * scale;
+  const mercatorY = v * scale + tileIdY * scale;
+  const sphericalX = mod(mercatorX * Math.PI * 2.0 + Math.PI, Math.PI * 2);
+  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - (mercatorY * Math.PI * 2.0))) - Math.PI * 0.5;
+  const len = Math.cos(sphericalY);
+  return [
+    Math.sin(sphericalX) * len,
+    Math.sin(sphericalY),
+    Math.cos(sphericalX) * len
+  ]
 }

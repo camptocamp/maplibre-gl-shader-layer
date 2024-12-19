@@ -31,7 +31,17 @@ void main()  {
   // vec2 centerPixelCoords = floor(vPositionUnit * textureSize) * textureSize;
   // vec4 texDataCenterPixel = texture(tex, centerPixelCoords);
   // int countryCode = int((texDataCenterPixel.b * 256. + texDataCenterPixel.a) * 255.);  
-  int countryCode = int((texData.b * 256. + texData.a) * 255.);
+
+  // When country code is encoded on multiple chan
+  // int countryCode = int((texData.b * 256. + texData.a) * 255.);
+
+  // When country code is encoded on a single chan
+  int countryCode = int(texData.b * 255.);
+
+
+  // // DEBUG COUNTRY vs WATER
+  // fragColor = countryCode == 0 ? vec4(0., 0., 1., 0.25) : vec4(1., 0., 0., 0.25);
+  // return;
 
   float zoomToTileZoomCompensation = 1. + zoom - zoomTile;
 

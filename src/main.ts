@@ -1,11 +1,11 @@
-import "@maptiler/sdk/dist/maptiler-sdk.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
-import { config, Map as SDKMap } from "@maptiler/sdk";
-import { ShaderTiledLayer } from "./ShaderTiledLayer";
-import type { TileIndex } from "./tools";
-import { Color, type Material, type MeshBasicMaterial } from "three";
-import { TextureTiledLayer } from "./TextureTiledLayer";
-import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
+import maplibregl from "maplibre-gl";
+// import { ShaderTiledLayer } from "./ShaderTiledLayer";
+// import type { TileIndex } from "./tools";
+// import { Color, type Material, type MeshBasicMaterial } from "three";
+// import { TextureTiledLayer } from "./TextureTiledLayer";
+// import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 import { BorderDistanceLayer } from "./BorderDistanceLayer";
 
 // async function init() {
@@ -45,73 +45,75 @@ import { BorderDistanceLayer } from "./BorderDistanceLayer";
 // init();
 
 
-async function init2() {
-  const container = document.getElementById("map");
+// async function init2() {
+//   const container = document.getElementById("map");
 
-  if (!container) throw new Error('There is no div with the id: "map" ');
+//   if (!container) throw new Error('There is no div with the id: "map" ');
 
-  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-  const map = new SDKMap({ container, hash: true, terrainControl: true });
+//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+//   const map = new maplibregl.Map({ container, hash: true, terrainControl: true });
 
-  await map.onReadyAsync();
+//   await map.onReadyAsync();
 
-  console.log("map", map);
+//   console.log("map", map);
 
-  map.showTileBoundaries = true;
+//   map.showTileBoundaries = true;
 
-  const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
+//   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
 
-  const textureTiledLayer = new TextureTiledLayer("some layer", {
-    textureUrlPattern: satelliteUrlPattern,
-  });
+//   const textureTiledLayer = new TextureTiledLayer("some layer", {
+//     textureUrlPattern: satelliteUrlPattern,
+//   });
 
-  map.addLayer(textureTiledLayer);
-}
+//   map.addLayer(textureTiledLayer);
+// }
 
 
 
-async function init3() {
-  const container = document.getElementById("map");
+// async function init3() {
+//   const container = document.getElementById("map");
 
-  if (!container) throw new Error('There is no div with the id: "map" ');
+//   if (!container) throw new Error('There is no div with the id: "map" ');
 
-  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-  const map = new SDKMap({ container, hash: true, terrainControl: true });
+//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
+//   const map = new SDKMap({ container, hash: true, terrainControl: true, style: MapStyle.OUTDOOR, terrain: true, terrainExaggeration: 3 });
 
-  await map.onReadyAsync();
+//   await map.onReadyAsync();
 
-  console.log("map", map);
+//   console.log("map", map);
 
-  map.showTileBoundaries = true;
+//   map.showTileBoundaries = true;
 
-  const textureTiledLayer = new DummyGradientTiledLayer("some layer");
+//   const textureTiledLayer = new DummyGradientTiledLayer("some layer");
 
-  map.addLayer(textureTiledLayer);
-}
+//   map.addLayer(textureTiledLayer);
+// }
 
 
 async function init4() {
   const container = document.getElementById("map");
 
   if (!container) throw new Error('There is no div with the id: "map" ');
-
-  config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-  const map = new SDKMap({ container, hash: true, terrainControl: true });
-
-  await map.onReadyAsync();
-
-  console.log("map", map);
-
-  map.showTileBoundaries = true;
-
-  const tileUrlPattern = "http://localhost:53485/{z}/{x}/{y}.png";
-
-  const borderDistanceLayer = new BorderDistanceLayer("some layer", {
-    textureUrlPattern: tileUrlPattern,
-    animationSpeed: 1,
+;
+  const map = new maplibregl.Map({ 
+    container, 
+    hash: true, 
+    style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
   });
 
-  map.addLayer(borderDistanceLayer);
+  const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
+  map.showTileBoundaries = true;
+  console.log("map", map);
+
+  map.on("load", () => {
+    map.setProjection({ type: "globe" });
+    const borderDistanceLayer = new BorderDistanceLayer("some layer", {
+      textureUrlPattern: tileUrlPattern,
+      animationSpeed: 1,
+    });
+  
+    map.addLayer(borderDistanceLayer);
+  });
 }
 
 init4();
