@@ -3,7 +3,7 @@ precision highp int;
 
 uniform sampler2D tex;
 uniform float zoom;
-uniform float zoomTile;
+uniform vec3 tileIndex;
 uniform float phase;
 
 in vec2 vPositionUnit;
@@ -43,7 +43,7 @@ void main()  {
   // fragColor = countryCode == 0 ? vec4(0., 0., 1., 0.25) : vec4(1., 0., 0., 0.25);
   // return;
 
-  float zoomToTileZoomCompensation = 1. + zoom - zoomTile;
+  float zoomToTileZoomCompensation = 1. + zoom - tileIndex.z;
 
   float range = distance256 * 10. * zoomToTileZoomCompensation;
 

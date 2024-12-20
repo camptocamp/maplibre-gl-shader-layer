@@ -1,7 +1,7 @@
 
 
 import QuickLRU from "quick-lru";
-import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, FrontSide, BackSide } from "three";
+import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, FrontSide, BackSide, Vector3 } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 import { wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
@@ -55,7 +55,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
           uniforms: {
             tex: { value: texture },
             zoom: { value: this.map.getZoom() },
-            zoomTile: { value: tileIndex.z },
+            tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             phase: { value: 0 },
           },
           vertexShader: vertexShader,
@@ -72,11 +72,13 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
 
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
         // console.log("tile:", tile);
+
+        const tileIndeArray = tile.getTileIndexAsArray();
         
         const mat = tile.material as RawShaderMaterial;
         mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
         mat.uniforms.zoom.value = this.map.getZoom();
-        mat.uniforms.zoomTile.value = tile.getTileIndex().z;
+        (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
       },
       
       tileZoomFitting: "FLOOR",

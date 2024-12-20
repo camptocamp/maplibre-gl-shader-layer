@@ -6,7 +6,7 @@ export class Tile extends Mesh {
   private tileIndex: TileIndex = { z: 0, x: 0, y: 0 };
 
   constructor(geometry: BufferGeometry<NormalBufferAttributes> | undefined, material: Material | Material[] | undefined){
-    console.log("geometry", geometry);
+    // console.log("geometry", geometry);
     
     super(geometry?.clone(), material);
     this.matrixAutoUpdate = false;
@@ -93,21 +93,7 @@ export class Tile extends Mesh {
     this.tileIndex.y = ti.y;
     this.tileIndex.z = ti.z;
 
-    // Adding the custom positioning on the globe surface
-    const uvAttr = this.geometry.attributes.uv;
-    const nbAttr = uvAttr.count;
-
-    const positionWorld = new Float32Array(nbAttr * 3);
-    for (let i = 0; i < nbAttr; i += 1) {
-      const u = uvAttr.array[i*2];
-      const v = uvAttr.array[i*2 + 1];
-      const globePos = projectTileCoordinatesToSphereUV(u, v, this.tileIndex.x, this.tileIndex.y, this.tileIndex.z);
-      positionWorld[i*3] = globePos[0];
-      positionWorld[i*3 + 1] = globePos[1];
-      positionWorld[i*3 + 2] = globePos[2];
-    }
-
-    this.geometry.setAttribute('globe_pos_world', new BufferAttribute(positionWorld, 3));
+    // the positioning of tiles on the globe is done entirely on vertex shader
   }
 
   /**
@@ -119,6 +105,13 @@ export class Tile extends Mesh {
       y: this.tileIndex.y,
       z: this.tileIndex.z,
     }
+  }
+
+  /**
+   * Get the tile index as an array
+   */
+  getTileIndexAsArray(): [number, number, number] {
+    return [this.tileIndex.x, this.tileIndex.y, this.tileIndex.z]
   }
 
 }

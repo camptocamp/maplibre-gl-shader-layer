@@ -212,7 +212,9 @@ export function isTileInViewport(ti: TileIndex, map: maplibregl.Map, mapcanvasWi
 
 export function tileBoundsUnwrappedToTileList2(map: maplibregl.Map): TileIndex[] {  
   const zoom = Math.floor(map.getZoom());
-  return map.transform.coveringTiles({tileSize: 512}).filter(el => el.overscaledZ === zoom).map(el => {
+  return map.transform.coveringTiles({tileSize: 512})
+    // .filter(el => el.overscaledZ === zoom)
+    .map(el => {
     return {
       z: el.canonical.z,
       x: el.canonical.x,
