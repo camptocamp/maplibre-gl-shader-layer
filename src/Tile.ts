@@ -21,11 +21,6 @@ export class Tile extends Mesh {
     this.tileIndex.x = ti.x;
     this.tileIndex.y = ti.y;
     this.tileIndex.z = ti.z;
-
-    const mercatorPosition = tileIndexToMercatorPosition(ti);
-    this.scale.set(mercatorPosition.size, mercatorPosition.size, mercatorPosition.size);
-
-    this.position.set(mercatorPosition.center[0], mercatorPosition.center[1], 0);
   }
 
   /**
@@ -88,13 +83,6 @@ export class Tile extends Mesh {
     // this.position.set(mercatorPosition.center[0], mercatorPosition.center[1], 0);
   }
 
-  setTileIndexGlobe(ti: TileIndex) {
-    this.tileIndex.x = ti.x;
-    this.tileIndex.y = ti.y;
-    this.tileIndex.z = ti.z;
-
-    // the positioning of tiles on the globe is done entirely on vertex shader
-  }
 
   /**
    * Get the tile index (a copy)

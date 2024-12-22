@@ -9,6 +9,26 @@ uniform float phase;
 in vec2 vPositionUnit;
 out vec4 fragColor;
 
+vec3 numberToColor(float num) {
+  // Ensure input is in range 0-255
+  float n = clamp(num, 0.0, 255.0);
+  
+  // Use golden ratio to create well-distributed colors
+  float golden_ratio = 0.618033988749895;
+  
+  // Generate three different offsets using the input number
+  float h1 = fract(n * golden_ratio);
+  float h2 = fract(h1 + golden_ratio);
+  float h3 = fract(h2 + golden_ratio);
+  
+  // Convert to RGB - each component will be between 0 and 1
+  return vec3(
+    0.5 + 0.5 * sin(h1 * 6.28318),
+    0.5 + 0.5 * sin(h2 * 6.28318),
+    0.5 + 0.5 * sin(h3 * 6.28318)
+  );
+}
+
 void main()  {
   // DEBUG RED
   // fragColor = vec4(1., 0., 0., 0.5);
@@ -22,20 +42,7 @@ void main()  {
   float distance1024 = (texData.r * 256. + texData.g) / 64.;
   float distance256 = distance1024 / 4.;
 
-  
-  
-
-  // The code of the country is a uint16 on B and A channels,
-  // but this has to be read on a center-pixel way to avoid linear interpolation.
-  // vec2 textureSize = vec2(1024., 1024.);
-  // vec2 centerPixelCoords = floor(vPositionUnit * textureSize) * textureSize;
-  // vec4 texDataCenterPixel = texture(tex, centerPixelCoords);
-  // int countryCode = int((texDataCenterPixel.b * 256. + texDataCenterPixel.a) * 255.);  
-
-  // When country code is encoded on multiple chan
-  // int countryCode = int((texData.b * 256. + texData.a) * 255.);
-
-  // When country code is encoded on a single chan
+  // Country code is encoded on the blue channel
   int countryCode = int(texData.b * 255.);
 
 
@@ -45,37 +52,27 @@ void main()  {
 
   float zoomToTileZoomCompensation = 1. + zoom - tileIndex.z;
 
-  float range = distance256 * 10. * zoomToTileZoomCompensation;
-
-  // fragColor = vec4(1., 0., 0., range);
-  // return;
+  float range = distance256 * 15. * zoomToTileZoomCompensation;
   
 
-  // if (range < .01) {
-  //   fragColor = vec4(1., 0., 0., 0.5);
-  //   return;
-  // }
+  // Water
+  if (countryCode == 0) {
+    if (range < .01 || range >= 1.) {
+      discard;
+      return;
+    }
 
-  if (range < .01 || range >= 1. || countryCode != 0) {
-    discard;
+    
+    float shade = cos(range * 80. - phase) * (1. - range) * 0.5;
+    vec3 waveColor = vec3(0., 99., 229.) / 255.;
+
+    fragColor = vec4(waveColor.rgb, shade);
     return;
   }
 
-  // float shade = cos(range * 200.) * (1. - range) * 0.4;
-  float shade = cos(range * 75. - phase) * (1. - range) * 0.5;
+  // non-water
 
-  vec3 waveColor = vec3(0., 99., 229.) / 255.;
-
-  // if (countryCode != 0) {
-  //   fragColor = vec4(0., 0., 0., 0.);
-  //   return;
-  // }
-
-
-  fragColor = vec4(waveColor.rgb, shade);
-  
-
-
-  // fragColor = vec4(0., 0., 0., 0.3);
+  vec3 countryColor = numberToColor(float(countryCode));
+  fragColor = vec4(countryColor.rgb, 1. - (range*3.));
   
 }

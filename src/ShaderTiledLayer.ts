@@ -178,9 +178,11 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     const tbu = getTileBoundsUnwrapped(this.map, z);
     // The candidates are strictly based on axis-align bounding box, so when map is pitched and rotated,
     // the list of candidates needs to be pruned from all the tiles that are not in viewport
-    // const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
-    const tileIndicesCandidates = tileBoundsUnwrappedToTileList2(this.map);
+    const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
+    // const tileIndicesCandidates = tileBoundsUnwrappedToTileList2(this.map);
 
+    console.log(tileIndicesCandidates.length);
+    
     if (this.map.getZoom() >= z) {
       return tileIndicesCandidates;
     }
@@ -261,10 +263,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
       }
 
       usedTileMapNew.set(tileID, tile);
-      // tile.setTileIndex(tileIndex);
-      // tile.setTileIndex2(tileIndex, this.map);
-      tile.setTileIndexGlobe(tileIndex);
-      // this.tileContainer.add(tile);
+      tile.setTileIndex(tileIndex);
       this.scene.add(tile);
       
       if (this.onTileUpdate) {
