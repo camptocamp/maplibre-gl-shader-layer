@@ -193,11 +193,14 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   }
 
 
-  onRemove(map: maplibregl.Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+  onRemove(_map: maplibregl.Map, _gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     console.warn("not implemented yet");
   }
 
-  prerender(gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
+  prerender(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
+
+    // console.log("options", options);
+    
     // console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
     
     this.shouldShowCurrent = this.shouldShow();

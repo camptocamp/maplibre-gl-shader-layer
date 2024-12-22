@@ -106,7 +106,7 @@ async function init4() {
   console.log("map", map);
 
   map.on("load", () => {
-    map.setProjection({ type: "globe" });
+    // map.setProjection({ type: "globe" });
     const borderDistanceLayer = new BorderDistanceLayer("some layer", {
       textureUrlPattern: tileUrlPattern,
       animationSpeed: 1,

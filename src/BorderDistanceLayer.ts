@@ -44,8 +44,8 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
       maxZoom: 8,
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
-        
         const texture = this.getTexture(tileIndex);
+        const mapProjection = this.map.getProjection();
 
         const material = new RawShaderMaterial({
           // This automatically adds the top-level instruction:
@@ -57,6 +57,7 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             phase: { value: 0 },
+            isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -71,13 +72,14 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
 
 
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
-        // console.log("tile:", tile);
+        const mapProjection = this.map.getProjection();
 
         const tileIndeArray = tile.getTileIndexAsArray();
         
         const mat = tile.material as RawShaderMaterial;
         mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
         mat.uniforms.zoom.value = this.map.getZoom();
+        mat.uniforms.isGlobe.value = (mapProjection && mapProjection.type === "globe");
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
       },
       
