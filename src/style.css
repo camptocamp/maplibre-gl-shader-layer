@@ -1,6 +1,7 @@
 html,
 body {
   margin: 0;
+  background-color: rgb(2, 0, 36);
 }
 
 #map {

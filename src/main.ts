@@ -98,11 +98,13 @@ async function init4() {
   const map = new maplibregl.Map({ 
     container, 
     hash: true, 
-    style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
+    // style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
+    style: `https://api.maptiler.com/maps/backdrop-dark/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
+    
   });
 
   const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
-  map.showTileBoundaries = true;
+  // map.showTileBoundaries = true;
   console.log("map", map);
 
   map.on("load", () => {

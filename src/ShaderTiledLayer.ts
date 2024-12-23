@@ -180,8 +180,6 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     // the list of candidates needs to be pruned from all the tiles that are not in viewport
     const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
     // const tileIndicesCandidates = tileBoundsUnwrappedToTileList2(this.map);
-
-    console.log(tileIndicesCandidates.length);
     
     if (this.map.getZoom() >= z) {
       return tileIndicesCandidates;
