@@ -300,6 +300,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     
   }
 
+
   render(gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
     // Escape if not rendering
     if (!this.shouldShowCurrent) return;
