@@ -57,7 +57,7 @@ void main()  {
       return;
     }
 
-    float shade = cos(range * 80. * waveDensity + phase) * (1. - range) * 0.5;
+    float shade = cos(range * 80. * waveDensity + phase) * (1. - range) * 0.99; // TODO: make 0.99 a uniform
 
     // Fading linearly from zoom level 11.5 to 12.5
     float fadeFactorWater = max(0., min(1., 12.5 - zoom));

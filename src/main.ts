@@ -1,13 +1,16 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import maplibregl from "maplibre-gl";
+import { ShaderTiledLayer } from "./ShaderTiledLayer";
+import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
+import { TextureTiledLayer } from "./TextureTiledLayer";
 // import { ShaderTiledLayer } from "./ShaderTiledLayer";
 // import type { TileIndex } from "./tools";
 // import { Color, type Material, type MeshBasicMaterial } from "three";
 // import { TextureTiledLayer } from "./TextureTiledLayer";
 // import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
-import { BorderDistanceLayer } from "./BorderDistanceLayer";
-import { ShoreLayer } from "./ShoreLayer";
+// import { BorderDistanceLayer } from "./BorderDistanceLayer";
+// import { ShoreLayer } from "./ShoreLayer";
 
 // async function init() {
 //   const container = document.getElementById("map");
@@ -120,11 +123,45 @@ import { ShoreLayer } from "./ShoreLayer";
 // }
 
 
-async function init5() {
-  const container = document.getElementById("map");
+// async function init5() {
+//   const container = document.getElementById("map");
 
+//   if (!container) throw new Error('There is no div with the id: "map" ');
+// ;
+//   const map = new maplibregl.Map({ 
+//     container, 
+//     hash: true, 
+//     style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
+//     // style: `https://api.maptiler.com/maps/backdrop-dark/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
+    
+//   });
+
+//   const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
+//   // map.showTileBoundaries = true;
+//   console.log("map", map);
+
+//   map.on("load", () => {
+//     // map.setProjection({ type: "globe" });
+//     const layer = new ShoreLayer("some layer", {
+//       textureUrlPattern: tileUrlPattern,
+//       animationSpeed: 0,
+//       // color: {r: 255, g: 120, b: 0}
+//     });
+  
+//     map.addLayer(layer);
+//     console.log("layer", layer);
+    
+//   });
+// }
+
+// init5();
+
+
+async function init() {
+  const container = document.getElementById("map");
+  
   if (!container) throw new Error('There is no div with the id: "map" ');
-;
+
   const map = new maplibregl.Map({ 
     container, 
     hash: true, 
@@ -133,23 +170,30 @@ async function init5() {
     
   });
 
-  const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
-  // map.showTileBoundaries = true;
-  console.log("map", map);
+  map.showTileBoundaries = true;
+
+  map.on('style.load', () => {
+    map.setProjection({
+      type: 'globe', // Set projection to globe
+    });
+  });
+
 
   map.on("load", () => {
-    // map.setProjection({ type: "globe" });
-    const layer = new ShoreLayer("some layer", {
-      textureUrlPattern: tileUrlPattern,
-      animationSpeed: 0,
-      color: {r: 255, g: 120, b: 0}
+
+
+
+    // const layer = new DummyGradientTiledLayer("some layer");
+    const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${import.meta.env.VITE_MAPTILER_API_KEY}`;
+
+    const layer = new TextureTiledLayer("some layer", {
+      textureUrlPattern: satelliteUrlPattern,
     });
-  
+
     map.addLayer(layer);
-    console.log("layer", layer);
-    
-  });
+  })
+
 }
 
-init5();
+init();
 

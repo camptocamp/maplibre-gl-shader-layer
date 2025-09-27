@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@mapbox/whoots-js": "^3.1.0",
-    "maplibre-gl": "file:../maplibre-gl-js/maplibre-gl-5.0.0-pre.10.tgz",
+    "maplibre-gl": "^5.7.3",
     "quick-lru": "^7.0.0",
     "three": "^0.166.1"
   }

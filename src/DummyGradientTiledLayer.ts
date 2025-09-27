@@ -26,12 +26,13 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
           uniforms: {
             zoom: { value: this.map.getZoom() },
           },
+          
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
           side: DoubleSide,
 					transparent: true,
           depthTest: false,
-          wireframe: true,
+          // wireframe: true,
         })
         
         return material;

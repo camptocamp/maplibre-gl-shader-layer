@@ -73,7 +73,6 @@ export class BorderDistanceLayer extends ShaderTiledLayer {
 
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
         const mapProjection = this.map.getProjection();
-
         const tileIndeArray = tile.getTileIndexAsArray();
         
         const mat = tile.material as RawShaderMaterial;
