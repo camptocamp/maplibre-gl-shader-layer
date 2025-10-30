@@ -114,16 +114,16 @@ export class MultiChannelTiledLayer extends ShaderTiledLayer {
 
   private getTexture(tileIndex: TileIndex): Texture {
       const tileIndexWrapped = wrapTileIndex(tileIndex);
-      const textureId = `${tileIndexWrapped.z}_${tileIndexWrapped.x}_${tileIndexWrapped.y}`;
-    
-      let texture: Texture;
-      
-      if (this.texturePool.has(textureId)) {
-        texture = this.texturePool.get(textureId) as Texture;
-      } else {
-        const textureURL = this.textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
+      const textureURL = this.textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
           .replace("{y}", tileIndexWrapped.y.toString())
           .replace("{z}", tileIndexWrapped.z.toString());
+
+      let texture: Texture;
+      
+      if (this.texturePool.has(textureURL)) {
+        texture = this.texturePool.get(textureURL) as Texture;
+      } else {
+        
   
         // texture = this.textureLoader.load(
         texture = new TextureLoader().load(
@@ -143,7 +143,7 @@ export class MultiChannelTiledLayer extends ShaderTiledLayer {
         );      
       }
       texture.flipY = false;
-      this.texturePool.set(textureId, texture);
+      this.texturePool.set(textureURL, texture);
   
       return texture;
     }

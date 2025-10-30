@@ -284,3 +284,15 @@ export function projectTileCoordinatesToSphereUV(u: number, v: number, tileIdX: 
     Math.cos(sphericalX) * len
   ]
 }
+
+export function clamp(range: [number, number], value: number): number {
+  if (value < range[0]) {
+    return range[0];
+  }
+
+  if (value > range[1]) {
+    return range[1];
+  }
+
+  return value;
+}
