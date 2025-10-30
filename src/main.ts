@@ -4,159 +4,10 @@ import maplibregl from "maplibre-gl";
 import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 import { TextureTiledLayer } from "./TextureTiledLayer";
-import { getStyle } from "basemapkit";
+import { getStyle, setLayerOpacity } from "basemapkit";
 import { Protocol } from "pmtiles";
-// import { ShaderTiledLayer } from "./ShaderTiledLayer";
-// import type { TileIndex } from "./tools";
-// import { Color, type Material, type MeshBasicMaterial } from "three";
-// import { TextureTiledLayer } from "./TextureTiledLayer";
-// import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
-// import { BorderDistanceLayer } from "./BorderDistanceLayer";
-// import { ShoreLayer } from "./ShoreLayer";
-
-// async function init() {
-//   const container = document.getElementById("map");
-
-//   if (!container) throw new Error('There is no div with the id: "map" ');
-
-//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-//   const map = new SDKMap({ container, hash: true, terrainControl: true });
-
-//   await map.onReadyAsync();
-
-//   console.log("map", map);
-
-//   // map.showTileBoundaries = true;
-
-//   const tiledLayer = new ShaderTiledLayer("some layer", {
-//     // This function updates the tiling color and layout based on map settings and tile index
-//     onTileUpdate: (tileIndex: TileIndex, material: Material) => {
-//       const z = map.getZoom();
-//       const pitch = map.getPitch();
-//       const bearing = map.getBearing();
-//       const m = material as MeshBasicMaterial;
-//       m.color = new Color(z / 22, pitch / 60, (bearing + 180) / 360);
-
-//       if ((tileIndex.x % 2 === 0 && tileIndex.y % 2 === 0) || (tileIndex.x % 2 === 1 && tileIndex.y % 2 === 1)) {
-//         m.opacity = 0.8;
-//       } else {
-//         m.opacity = 0.4;
-//       }
-//     },
-//   });
-
-//   map.addLayer(tiledLayer);
-// }
-
-// init();
-
-
-// async function init2() {
-//   const container = document.getElementById("map");
-
-//   if (!container) throw new Error('There is no div with the id: "map" ');
-
-//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-//   const map = new maplibregl.Map({ container, hash: true, terrainControl: true });
-
-//   await map.onReadyAsync();
-
-//   console.log("map", map);
-
-//   map.showTileBoundaries = true;
-
-//   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${config.apiKey}`;
-
-//   const textureTiledLayer = new TextureTiledLayer("some layer", {
-//     textureUrlPattern: satelliteUrlPattern,
-//   });
-
-//   map.addLayer(textureTiledLayer);
-// }
-
-
-
-// async function init3() {
-//   const container = document.getElementById("map");
-
-//   if (!container) throw new Error('There is no div with the id: "map" ');
-
-//   config.apiKey = import.meta.env.VITE_MAPTILER_API_KEY;
-//   const map = new SDKMap({ container, hash: true, terrainControl: true, style: MapStyle.OUTDOOR, terrain: true, terrainExaggeration: 3 });
-
-//   await map.onReadyAsync();
-
-//   console.log("map", map);
-
-//   map.showTileBoundaries = true;
-
-//   const textureTiledLayer = new DummyGradientTiledLayer("some layer");
-
-//   map.addLayer(textureTiledLayer);
-// }
-
-
-// async function init4() {
-//   const container = document.getElementById("map");
-
-//   if (!container) throw new Error('There is no div with the id: "map" ');
-// ;
-//   const map = new maplibregl.Map({ 
-//     container, 
-//     hash: true, 
-//     // style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-//     style: `https://api.maptiler.com/maps/backdrop-dark/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-    
-//   });
-
-//   const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
-//   // map.showTileBoundaries = true;
-//   console.log("map", map);
-
-//   map.on("load", () => {
-//     // map.setProjection({ type: "globe" });
-//     const borderDistanceLayer = new BorderDistanceLayer("some layer", {
-//       textureUrlPattern: tileUrlPattern,
-//       animationSpeed: 1,
-//     });
-  
-//     map.addLayer(borderDistanceLayer);
-//   });
-// }
-
-
-// async function init5() {
-//   const container = document.getElementById("map");
-
-//   if (!container) throw new Error('There is no div with the id: "map" ');
-// ;
-//   const map = new maplibregl.Map({ 
-//     container, 
-//     hash: true, 
-//     style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-//     // style: `https://api.maptiler.com/maps/backdrop-dark/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-    
-//   });
-
-//   const tileUrlPattern = "http://localhost:64862/{z}/{x}/{y}.webp";
-//   // map.showTileBoundaries = true;
-//   console.log("map", map);
-
-//   map.on("load", () => {
-//     // map.setProjection({ type: "globe" });
-//     const layer = new ShoreLayer("some layer", {
-//       textureUrlPattern: tileUrlPattern,
-//       animationSpeed: 0,
-//       // color: {r: 255, g: 120, b: 0}
-//     });
-  
-//     map.addLayer(layer);
-//     console.log("layer", layer);
-    
-//   });
-// }
-
-// init5();
+import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
+import { Colormap } from "./colormap";
 
 
 async function init() {
@@ -170,19 +21,22 @@ async function init() {
   const pmtiles = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/planet.pmtiles";
   const sprite = "https://raw.githubusercontent.com/jonathanlurie/phosphor-mlgl-sprite/refs/heads/main/sprite/phosphor-diecut";
   const glyphs = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
-  const pmtilesTerrain = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles";
-  const terrainTileEncoding = "terrarium";
 
-  const style = getStyle("avenue", {
+  let style = getStyle("spectre-purple", {
     pmtiles,
     sprite,
     glyphs,
     lang,
-    terrain: {
-      pmtiles: pmtilesTerrain,
-      encoding: terrainTileEncoding,
-    },
+    hidePOIs: true,
   });
+
+  style = setLayerOpacity("water", 0.3, style);
+
+  // Webgl layer not working well with Basemakit definition of globe 
+  style.projection = {type: "globe"};
+
+  console.log(style);
+  
 
   const map = new maplibregl.Map({ 
     container, 
@@ -190,22 +44,55 @@ async function init() {
     style: style,
   });
 
-  map.showTileBoundaries = true;
+
+  console.log(map);
+  
+
+  // map.showTileBoundaries = true;
 
 
-  // map.on("load", () => {
+  map.on("load", async () => {
+    const multiChannelTilesetPattern = "http://127.0.0.1:8083/temperature_2m/web/2025-10-29T06%3A00%3A00Z/{z}/{x}/{y}.webp"
 
+    // Colormap on the temperature scale (degree Celcius)
+    // using the Google Turbo colormap definition
+    const colormapDefinition = [
+      -65, "#30123b",
+      -55, "#4040a2",
+      -40, "#466be3",
+      -30, "#4293ff",
+      -20, "#28bbec",
+      -15, "#18dcc3",
+      -10, "#31f299",
+      -5, "#6bfe64",
+      0, "#a2fc3c",
+      5, "#cced34",
+      10, "#edd03a",
+      15, "#fdad35",
+      20, "#e76b18",
+      25, "#ec520f",
+      30, "#d23105",
+      40, "#ac1701",
+      55, "#7a0403",
+    ];
 
+    const colormap = Colormap.fromColormapDescription(colormapDefinition);
 
-  //   // const layer = new DummyGradientTiledLayer("some layer");
-  //   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${import.meta.env.VITE_MAPTILER_API_KEY}`;
+    const layer = new MultiChannelTiledLayer("custom-layer", {
+      // textureUrlPattern: satelliteUrlPattern,
+      textureUrlPattern: multiChannelTilesetPattern,
+      minZoom: 0,
+      maxZoom: 4,
+      rasterEncoding: {
+        channels: "gb",
+        polynomialSlope: 0.01,
+        polynomialOffset: -200,
+      },
+      colormap,
+    });
 
-  //   const layer = new TextureTiledLayer("some layer", {
-  //     textureUrlPattern: satelliteUrlPattern,
-  //   });
-
-  //   map.addLayer(layer);
-  // })
+    map.addLayer(layer, "water");
+  })
 
 }
 
