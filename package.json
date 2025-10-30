@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "@mapbox/whoots-js": "^3.1.0",
+    "basemapkit": "^0.4.1",
     "maplibre-gl": "^5.7.3",
+    "pmtiles": "^4.3.0",
     "quick-lru": "^7.0.0",
     "three": "^0.166.1"
   }

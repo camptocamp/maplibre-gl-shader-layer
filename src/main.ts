@@ -4,6 +4,8 @@ import maplibregl from "maplibre-gl";
 import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 import { TextureTiledLayer } from "./TextureTiledLayer";
+import { getStyle } from "basemapkit";
+import { Protocol } from "pmtiles";
 // import { ShaderTiledLayer } from "./ShaderTiledLayer";
 // import type { TileIndex } from "./tools";
 // import { Color, type Material, type MeshBasicMaterial } from "three";
@@ -158,40 +160,52 @@ import { TextureTiledLayer } from "./TextureTiledLayer";
 
 
 async function init() {
+  maplibregl.addProtocol("pmtiles", new Protocol().tile);
+
   const container = document.getElementById("map");
   
   if (!container) throw new Error('There is no div with the id: "map" ');
 
+  const lang = "en";
+  const pmtiles = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/planet.pmtiles";
+  const sprite = "https://raw.githubusercontent.com/jonathanlurie/phosphor-mlgl-sprite/refs/heads/main/sprite/phosphor-diecut";
+  const glyphs = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
+  const pmtilesTerrain = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles";
+  const terrainTileEncoding = "terrarium";
+
+  const style = getStyle("avenue", {
+    pmtiles,
+    sprite,
+    glyphs,
+    lang,
+    terrain: {
+      pmtiles: pmtilesTerrain,
+      encoding: terrainTileEncoding,
+    },
+  });
+
   const map = new maplibregl.Map({ 
     container, 
     hash: true, 
-    style: `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-    // style: `https://api.maptiler.com/maps/backdrop-dark/style.json?key=${import.meta.env.VITE_MAPTILER_API_KEY}`
-    
+    style: style,
   });
 
   map.showTileBoundaries = true;
 
-  map.on('style.load', () => {
-    map.setProjection({
-      type: 'globe', // Set projection to globe
-    });
-  });
 
-
-  map.on("load", () => {
+  // map.on("load", () => {
 
 
 
-    // const layer = new DummyGradientTiledLayer("some layer");
-    const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${import.meta.env.VITE_MAPTILER_API_KEY}`;
+  //   // const layer = new DummyGradientTiledLayer("some layer");
+  //   const satelliteUrlPattern = `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${import.meta.env.VITE_MAPTILER_API_KEY}`;
 
-    const layer = new TextureTiledLayer("some layer", {
-      textureUrlPattern: satelliteUrlPattern,
-    });
+  //   const layer = new TextureTiledLayer("some layer", {
+  //     textureUrlPattern: satelliteUrlPattern,
+  //   });
 
-    map.addLayer(layer);
-  })
+  //   map.addLayer(layer);
+  // })
 
 }
 
