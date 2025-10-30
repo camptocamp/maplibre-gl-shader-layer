@@ -69,7 +69,6 @@ export class MultiChannelTiledLayer extends ShaderTiledLayer {
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
-            rasterEncodingNbChannels: { value: this.rasterEncoding.channels.length },
             rasterEncodingPolynomialSlope: { value: this.rasterEncoding.polynomialSlope },
             rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
             colormapRangeMin: { value: this.colormap.getRange().min },
@@ -84,6 +83,7 @@ export class MultiChannelTiledLayer extends ShaderTiledLayer {
           // wireframe: true,
           defines: {
             RASTER_ENCODING_CHANNELS: this.rasterEncoding.channels,
+            RASTER_ENCODING_NB_CHANNELS: this.rasterEncoding.channels.length,
           }
         })
 

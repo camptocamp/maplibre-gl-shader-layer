@@ -25,13 +25,21 @@ vec4 getTextureColor(float realWorldValue) {
 void main()  {
   vec4 texColor = texture(tex, vPositionUnit);
 
-  // For this test, we use only the channels "gb"
-  vec2 relevantChannels = texColor.gb;
+  // For this test, we use the define RASTER_ENCODING_CHANNELS to know on what channel
+  // the value to display is encoded
+  // those channels will then be addressed as relevantChannels.x .y and .z
 
-  // those channels will then be addressed as relevantChannels.x and relevantChannels.y
+  float x = 0.;
 
-  // The value x is the value as encoded on the multiple channels as uint:
-  float x = (relevantChannels.x * 255.) * 256. + (relevantChannels.y * 255.);
+  #if RASTER_ENCODING_NB_CHANNELS == 1
+    x = texColor.RASTER_ENCODING_CHANNELS * 255.;
+  #elif RASTER_ENCODING_NB_CHANNELS == 2
+    vec2 relevantChannels = texColor.RASTER_ENCODING_CHANNELS;
+    x = (relevantChannels.x * 255.) * 256. + (relevantChannels.y * 255.);
+  #elif RASTER_ENCODING_NB_CHANNELS == 3
+    vec3 relevantChannels = texColor.RASTER_ENCODING_CHANNELS;
+    x = (relevantChannels.x * 255.) * 256. * 256. + (relevantChannels.y * 255.) * 256. + (relevantChannels.z * 255.);
+  #endif
 
   // The value in real world unit
   float y = rasterEncodingPolynomialSlope * x + rasterEncodingPolynomialOffset;
