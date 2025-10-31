@@ -11,7 +11,7 @@ import type { Tile } from "./Tile";
 // @ts-ignore
 import vertexShader from "./shaders/texture-tile.v.glsl?raw";
 // @ts-ignore
-import fragmentShader from "./shaders/multi-channel-tile.f.glsl?raw";
+import fragmentShader from "./shaders/multi-channel-series-tile.f.glsl?raw";
 import type { Colormap } from "./colormap";
 
 
@@ -150,25 +150,21 @@ export type MultiChannelSeriesTiledLayerSpecification = {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 export type MultiChannelSeriesTiledLayerOptions = {
   datasetSpecification: MultiChannelSeriesTiledLayerSpecification,
   colormap: Colormap,
+
+  /**
+   * Position to start with when initializing the layer.
+   * If not provided, the begining of the series will be used instead
+   */
+  seriesAxisValue?: number,
+
+  tileUrlPrefix?: string,
 }
 
 
 export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
-  private readonly textureUrlPattern: string;
   private readonly texturePool: QuickLRU<string, Texture> = new QuickLRU({
     // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     maxSize: 100,
@@ -186,10 +182,11 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
 
   private readonly rasterEncoding: RasterEncoding;
   private readonly colormap: Colormap;
-  private seriesAxisPosition: number;
-  private datasetSpecification: MultiChannelSeriesTiledLayerSpecification;
-  private seriesElementBefore: SeriesElement;
-  private seriesElementAfter: SeriesElement;
+  private seriesAxisValue!: number;
+  private readonly datasetSpecification: MultiChannelSeriesTiledLayerSpecification;
+  private seriesElementBefore!: SeriesElement;
+  private seriesElementAfter!: SeriesElement;
+  private readonly tileUrlPrefix: string;
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
     super(id, {
@@ -197,7 +194,6 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       maxZoom: options.datasetSpecification.maxZoom,
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
-        const texture = this.getTexture(tileIndex);
         const mapProjection = this.map.getProjection();
 
         const material = new RawShaderMaterial({
@@ -206,8 +202,11 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
           glslVersion: GLSL3,
 
           uniforms: {
-            texBefore: { value: texture },
-            texAfter: { value: texture },
+            texBefore: { value: this.getTexture(tileIndex, this.seriesElementBefore.tileUrlPattern) },
+            texAfter: { value: this.getTexture(tileIndex, this.seriesElementAfter.tileUrlPattern) },
+            seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
+            seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
+            seriesAxisValue: { value: this.seriesAxisValue },
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
@@ -236,30 +235,35 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
         const mapProjection = this.map.getProjection();
         const tileIndeArray = tile.getTileIndexAsArray();
-        const mat = tile.material as RawShaderMaterial;
+        const material = tile.material as RawShaderMaterial;
         const zoom = this.map.getZoom();
         // At z12+, the globe is no longer globe in Maplibre
         const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
+        material.uniforms.texBefore.value = this.getTexture(tile.getTileIndex(), this.seriesElementBefore.tileUrlPattern);
+        material.uniforms.texAfter.value = this.getTexture(tile.getTileIndex(), this.seriesElementAfter.tileUrlPattern);
+        material.uniforms.seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
+        material.uniforms.seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
+        material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
+        material.uniforms.zoom.value = zoom;
+        material.uniforms.isGlobe.value = isGlobe;
+        (material.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
 
-        mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
-        mat.uniforms.zoom.value = zoom;
-        mat.uniforms.isGlobe.value = isGlobe;
-        (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+        console.log(material.uniforms);
+        
       }
     });
 
-
+    this.tileUrlPrefix = options.tileUrlPrefix ?? "";
     this.datasetSpecification = options.datasetSpecification;
-
-    this.textureUrlPattern = options.textureUrlPattern;
-    this.rasterEncoding = options.rasterEncoding;
+    this.rasterEncoding = options.datasetSpecification.rasterEncoding;
     this.colormap = options.colormap;
+    this.setSeriesAxisValue(options.seriesAxisValue ?? this.datasetSpecification.series[0].seriesAxisValue)
   }
 
 
   private getTexture(tileIndex: TileIndex, textureUrlPattern: string): Texture {
       const tileIndexWrapped = wrapTileIndex(tileIndex);
-      const textureURL = textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
+      const textureURL = this.tileUrlPrefix + textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
         .replace("{y}", tileIndexWrapped.y.toString())
         .replace("{z}", tileIndexWrapped.z.toString());
 
@@ -311,13 +315,17 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
     }
 
 
-    setSeriesAxisPosition(pos: number) {
+    setSeriesAxisValue(pos: number) {
       const range = this.getSerieAxisRange();
       if (!range) {
         return;
       }
-      this.seriesAxisPosition = clamp(range, pos);
+      this.seriesAxisValue = clamp(range, pos);
       this.defineCurrentSeriesElement();
+
+      if (this.map) {
+        this.map.triggerRepaint();
+      }
     }
 
 
@@ -327,19 +335,25 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         return null;
       }
 
-      const range = this.getSerieAxisRange();
-      if (!range) {
-        return;
-      }
-
-      if (this.seriesAxisPosition <= range[0]) {
+      if (series.length === 1) {
         this.seriesElementBefore = series[0];
         this.seriesElementAfter = series[0];
         return;
       }
 
-      if (this.seriesAxisPosition >= range[1]) {
-        this.seriesElementBefore = series[series.length - 1];
+      const range = this.getSerieAxisRange();
+      if (!range) {
+        return;
+      }
+
+      if (this.seriesAxisValue <= range[0]) {
+        this.seriesElementBefore = series[0];
+        this.seriesElementAfter = series[0 + 1];
+        return;
+      }
+
+      if (this.seriesAxisValue >= range[1]) {
+        this.seriesElementBefore = series[series.length - 2];
         this.seriesElementAfter = series[series.length - 1];
         return;
       }
@@ -348,7 +362,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         const seriesI = series[i];
         const seriesNext = series[i + 1];
 
-        if (this.seriesAxisPosition > seriesI.seriesAxisValue && this.seriesAxisPosition > seriesNext.seriesAxisValue) {
+        if (this.seriesAxisValue > seriesI.seriesAxisValue && this.seriesAxisValue > seriesNext.seriesAxisValue) {
           this.seriesElementBefore = seriesI;
           this.seriesElementAfter = seriesNext;
           break;
