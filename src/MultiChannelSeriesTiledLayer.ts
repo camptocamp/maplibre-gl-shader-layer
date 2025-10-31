@@ -167,7 +167,7 @@ export type MultiChannelSeriesTiledLayerOptions = {
 export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   private readonly texturePool: QuickLRU<string, Texture> = new QuickLRU({
     // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-    maxSize: 100,
+    maxSize: 10000,
 
     onEviction(_key: string, value: Texture) {
       console.log("freeing texture GPU memory");
@@ -187,6 +187,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   private seriesElementBefore!: SeriesElement;
   private seriesElementAfter!: SeriesElement;
   private readonly tileUrlPrefix: string;
+  private readonly textureLoader = new TextureLoader();
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
     super(id, {
@@ -272,7 +273,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         
   
         // texture = this.textureLoader.load(
-        texture = new TextureLoader().load(
+        texture = this.textureLoader.load(
           textureURL,
           
           ( texture ) => {

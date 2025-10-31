@@ -110,7 +110,8 @@ async function initSeries() {
   const seriesSlider = document.getElementById("series-slider") as HTMLInputElement;
   if (!seriesSlider) throw new Error("Slider not working");
 
-  const tileUrlPrefix = "http://127.0.0.1:8083/";
+  // const tileUrlPrefix = "http://127.0.0.1:8083/";
+  const tileUrlPrefix = "http://127.0.0.1:8084/"
   const seriesInfoUrl = `${tileUrlPrefix}tileset_info.json`;
   const seriesInfoResponse = await fetch(seriesInfoUrl);
   const seriesInfo = await seriesInfoResponse.json() as MultiChannelSeriesTiledLayerSpecification;
