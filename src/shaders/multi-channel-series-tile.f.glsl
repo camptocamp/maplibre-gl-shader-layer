@@ -58,7 +58,7 @@ void main()  {
   float realWorldValueBefore = getRealWorldValue(texBefore);
   float realWorldValueAfter = getRealWorldValue(texAfter);
 
-  float ratioAfter = (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);
+  float ratioAfter = seriesAxisValueAfter == seriesAxisValueBefore ? 0.0 : (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);
   float interpolatedRealWorldValue = ratioAfter * realWorldValueAfter + (1. - ratioAfter) * realWorldValueBefore;
 
   fragColor = getTextureColor(interpolatedRealWorldValue);

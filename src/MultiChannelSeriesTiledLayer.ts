@@ -345,21 +345,22 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
 
       if (this.seriesAxisValue <= range[0]) {
         this.seriesElementBefore = series[0];
-        this.seriesElementAfter = series[0 + 1];
+        this.seriesElementAfter = series[0];
         return;
       }
 
       if (this.seriesAxisValue >= range[1]) {
-        this.seriesElementBefore = series[series.length - 2];
+        this.seriesElementBefore = series[series.length - 1];
         this.seriesElementAfter = series[series.length - 1];
         return;
       }
 
-      for (let i = 0; i < series.length - 2; i += 1) {
+      for (let i = 0; i < series.length - 1; i += 1) {
         const seriesI = series[i];
         const seriesNext = series[i + 1];
-
-        if (this.seriesAxisValue > seriesI.seriesAxisValue && this.seriesAxisValue < seriesNext.seriesAxisValue) {
+        
+        if (this.seriesAxisValue >= seriesI.seriesAxisValue && 
+            this.seriesAxisValue < seriesNext.seriesAxisValue) {
           this.seriesElementBefore = seriesI;
           this.seriesElementAfter = seriesNext;
           break;
