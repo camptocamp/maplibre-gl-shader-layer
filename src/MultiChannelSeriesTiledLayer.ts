@@ -155,6 +155,13 @@ export type MultiChannelSeriesTiledLayerOptions = {
   colormap: Colormap,
 
   /**
+   * Whether the colormap should be rendered with gradient (true)
+   * or with classes (false)
+   * default: true
+   */
+  colormapGradient?: boolean,
+
+  /**
    * Position to start with when initializing the layer.
    * If not provided, the begining of the series will be used instead
    */
@@ -188,6 +195,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   private seriesElementAfter!: SeriesElement;
   private readonly tileUrlPrefix: string;
   private readonly textureLoader = new TextureLoader();
+  private readonly colormapGradient;
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
     super(id, {
@@ -215,7 +223,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
             rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
             colormapRangeMin: { value: this.colormap.getRange().min },
             colormapRangeMax: { value: this.colormap.getRange().max },
-            colormapTex: { value: this.colormap.getTexture() },
+            colormapTex: { value: this.colormap.getTexture({gradient: this.colormapGradient, size: this.colormapGradient ? 512 : 4096}) },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -251,6 +259,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       }
     });
 
+    this.colormapGradient = options.colormapGradient ?? true;
     this.tileUrlPrefix = options.tileUrlPrefix ?? "";
     this.datasetSpecification = options.datasetSpecification;
     this.rasterEncoding = options.datasetSpecification.rasterEncoding;

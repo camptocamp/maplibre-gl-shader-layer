@@ -125,6 +125,8 @@ async function initSeries() {
   const pmtiles = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/planet.pmtiles";
   const sprite = "https://raw.githubusercontent.com/jonathanlurie/phosphor-mlgl-sprite/refs/heads/main/sprite/phosphor-diecut";
   const glyphs = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
+  const pmtilesTerrain = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles";
+  const terrainTileEncoding = "terrarium";
 
   let style = getStyle("spectre-purple", {
     pmtiles,
@@ -132,6 +134,10 @@ async function initSeries() {
     glyphs,
     lang,
     hidePOIs: true,
+    // terrain: {
+    //   pmtiles: pmtilesTerrain,
+    //   encoding: "terrarium"
+    // }
   });
 
   style = setLayerOpacity("water", 0.3, style);
@@ -146,6 +152,7 @@ async function initSeries() {
     container, 
     hash: true, 
     style: style,
+    maxPitch: 89,
   });
 
 
@@ -153,7 +160,7 @@ async function initSeries() {
 
   // Colormap on the temperature scale (degree Celcius)
   // using the Google Turbo colormap definition
-  const colormapDefinition = [
+  const colormapDefinitionTemperatureTurbo = [
     -65, "#30123b",
     -55, "#4040a2",
     -40, "#466be3",
@@ -173,7 +180,7 @@ async function initSeries() {
     55, "#7a0403",
   ];
 
-  const colormap = Colormap.fromColormapDescription(colormapDefinition);
+  const colormap = Colormap.fromColormapDescription(colormapDefinitionTemperatureTurbo);
   
 
   // map.showTileBoundaries = true;
@@ -183,6 +190,7 @@ async function initSeries() {
     const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
       datasetSpecification: seriesInfo,
       colormap,
+      colormapGradient: false,
       tileUrlPrefix,
     });
 

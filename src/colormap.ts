@@ -15,6 +15,11 @@ type ColormapImageCreationOption = {
    * Default: `250`
    */
   size?: number;
+
+  /**
+   * Whether the colormap is rendered as gradient (true) or as classes (false)
+   */
+  gradient?: boolean,
 };
 
 export class Colormap {
@@ -54,7 +59,7 @@ export class Colormap {
     );
   }
 
-  getRgbColorAt(value: number): RgbArrayColor {
+  getRgbColorAt(value: number, gradient = true): RgbArrayColor {
     if (value <= this.minValue) {
       return this.rgbColors[0] as RgbArrayColor;
     }
@@ -73,8 +78,11 @@ export class Colormap {
 
       if (value > lowerKeyPointValue && value < upperKeyPointValue) {
         const lowerColor = this.rgbColors[i] as RgbArrayColor;
-        const upperColor = this.rgbColors[i + 1] as RgbArrayColor;
+        if (!gradient) {
+          return lowerColor;
+        }
 
+        const upperColor = this.rgbColors[i + 1] as RgbArrayColor;
         const lowerToUpperKeyPointDistance = upperKeyPointValue - lowerKeyPointValue;
         const lowerKeyPointToValueDistance = value - lowerKeyPointValue;
         const weightUpper = lowerKeyPointToValueDistance / lowerToUpperKeyPointDistance;
@@ -98,6 +106,7 @@ export class Colormap {
     const size = options.size ?? 250;
     const canvas = document.createElement('canvas');
     const horizontal = options.horizontal ?? true;
+    const gradient = options.gradient ?? true;
     canvas.width = horizontal ? size : 1;
     canvas.height = horizontal ? 1 : size;
     const ctx = canvas.getContext('2d');
@@ -111,7 +120,7 @@ export class Colormap {
     const valueStep = valueSpan / size;
 
     for (let i = 0; i < size; i += 1) {
-      const color = this.getRgbColorAt(this.minValue + i * valueStep);
+      const color = this.getRgbColorAt(this.minValue + i * valueStep, gradient);
 
       imageDataArray[i * 4] = color[0];
       imageDataArray[i * 4 + 1] = color[1];
