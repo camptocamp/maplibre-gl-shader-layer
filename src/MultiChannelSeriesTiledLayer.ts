@@ -247,9 +247,6 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         material.uniforms.zoom.value = zoom;
         material.uniforms.isGlobe.value = isGlobe;
         (material.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
-
-        console.log(material.uniforms);
-        
       }
     });
 
@@ -362,7 +359,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         const seriesI = series[i];
         const seriesNext = series[i + 1];
 
-        if (this.seriesAxisValue > seriesI.seriesAxisValue && this.seriesAxisValue > seriesNext.seriesAxisValue) {
+        if (this.seriesAxisValue > seriesI.seriesAxisValue && this.seriesAxisValue < seriesNext.seriesAxisValue) {
           this.seriesElementBefore = seriesI;
           this.seriesElementAfter = seriesNext;
           break;

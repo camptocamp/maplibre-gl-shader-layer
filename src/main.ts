@@ -149,38 +149,36 @@ async function initSeries() {
 
 
   console.log(map);
+
+  // Colormap on the temperature scale (degree Celcius)
+  // using the Google Turbo colormap definition
+  const colormapDefinition = [
+    -65, "#30123b",
+    -55, "#4040a2",
+    -40, "#466be3",
+    -30, "#4293ff",
+    -20, "#28bbec",
+    -15, "#18dcc3",
+    -10, "#31f299",
+    -5, "#6bfe64",
+    0, "#a2fc3c",
+    5, "#cced34",
+    10, "#edd03a",
+    15, "#fdad35",
+    20, "#e76b18",
+    25, "#ec520f",
+    30, "#d23105",
+    40, "#ac1701",
+    55, "#7a0403",
+  ];
+
+  const colormap = Colormap.fromColormapDescription(colormapDefinition);
   
 
   // map.showTileBoundaries = true;
 
 
   map.on("load", async () => {
-    const multiChannelTilesetPattern = "http://127.0.0.1:8083/temperature_2m/web/2025-10-29T06%3A00%3A00Z/{z}/{x}/{y}.webp"
-
-    // Colormap on the temperature scale (degree Celcius)
-    // using the Google Turbo colormap definition
-    const colormapDefinition = [
-      -65, "#30123b",
-      -55, "#4040a2",
-      -40, "#466be3",
-      -30, "#4293ff",
-      -20, "#28bbec",
-      -15, "#18dcc3",
-      -10, "#31f299",
-      -5, "#6bfe64",
-      0, "#a2fc3c",
-      5, "#cced34",
-      10, "#edd03a",
-      15, "#fdad35",
-      20, "#e76b18",
-      25, "#ec520f",
-      30, "#d23105",
-      40, "#ac1701",
-      55, "#7a0403",
-    ];
-
-    const colormap = Colormap.fromColormapDescription(colormapDefinition);
-
     const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
       datasetSpecification: seriesInfo,
       colormap,
