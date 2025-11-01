@@ -200,6 +200,10 @@ async function initSeries() {
       const sliderTimestamp = parseFloat(seriesSlider.value);
       layer.setSeriesAxisValue(sliderTimestamp);
     })
+
+    seriesSlider.addEventListener("pointerenter", () => {      
+      layer.prefetchSeriesTexture(-10, 10);
+    })
   })
 
 }

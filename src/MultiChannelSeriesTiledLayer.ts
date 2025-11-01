@@ -187,6 +187,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   private seriesAxisValue!: number;
   private readonly datasetSpecification: MultiChannelSeriesTiledLayerSpecification;
   private seriesElementBefore!: SeriesElement;
+  private indexSeriesElementBefore = 0;
   private seriesElementAfter!: SeriesElement;
   private readonly tileUrlPrefix: string;
   private readonly textureLoader = new TextureLoader();
@@ -286,6 +287,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
             textureURL,
             
             ( texture ) => {
+              console.log("fetched ", tileIndex, textureUrlPattern);
               texture.flipY = false;
               this.texturePool.set(textureURL, texture);
               resolve(texture);
@@ -345,6 +347,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       }
 
       if (series.length === 1) {
+        this.indexSeriesElementBefore = 0;
         this.seriesElementBefore = series[0];
         this.seriesElementAfter = series[0];
         return;
@@ -356,12 +359,14 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       }
 
       if (this.seriesAxisValue <= range[0]) {
+        this.indexSeriesElementBefore = 0;
         this.seriesElementBefore = series[0];
         this.seriesElementAfter = series[0];
         return;
       }
 
       if (this.seriesAxisValue >= range[1]) {
+        this.indexSeriesElementBefore = series.length - 1;
         this.seriesElementBefore = series[series.length - 1];
         this.seriesElementAfter = series[series.length - 1];
         return;
@@ -373,11 +378,44 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         
         if (this.seriesAxisValue >= seriesI.seriesAxisValue && 
             this.seriesAxisValue < seriesNext.seriesAxisValue) {
+              this.indexSeriesElementBefore = i;
           this.seriesElementBefore = seriesI;
           this.seriesElementAfter = seriesNext;
           break;
         }
       }
+    }
+
+
+    /**
+     * Prefetch texture along the series dimensions for the same tile coverage as the curent.
+     * deltaBefore is the number of series elements before the curent position and deltaAfter
+     * is the number of elements after the curent position.
+     */
+    async prefetchSeriesTexture(deltaBefore: number, deltaAfter: number) {
+      // Tile indices {x, y, z} of the current tile coverage
+      const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
+      const series = this.datasetSpecification.series;
+      const fetchingPromiseList = [];
+
+      const seriesIndexStart = this.indexSeriesElementBefore + deltaBefore;
+      const seriesIndexEnd = this.indexSeriesElementBefore + deltaAfter;
+
+      let counter = 0;
+
+      for (let i = seriesIndexStart; i < seriesIndexEnd + 1; i += 1) {
+        if (i < 0) continue;
+        if (i >= series.length) break;
+
+        for( const tileIndex of tileIndices) {
+          counter ++
+          fetchingPromiseList.push(
+            this.getTexture(tileIndex, series[i].tileUrlPattern)
+          );
+        }
+      }
+      
+      await Promise.allSettled(fetchingPromiseList);
     }
 
 }
