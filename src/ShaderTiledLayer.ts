@@ -51,7 +51,7 @@ type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
  * Function to update the material of a tile Mesh.
  * The matrix is the one matrix provided by MapLibre
  */
-type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void;
+type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void | Promise<void>;
 
 export type ShaderTiledLayerOptions = {
   /**
@@ -197,12 +197,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     console.warn("not implemented yet");
   }
 
-  prerender(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
-
-    // console.log("options", options);
-    
-    // console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
-    
+  prerender(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {    
     this.shouldShowCurrent = this.shouldShow();
 
     // Escape if not rendering
@@ -212,16 +207,13 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     // this.tileContainer.clear();
     this.scene.clear()
     const allTileIndices = this.listTilesIndicesForMapBounds();
-    // console.log(allTileIndices);
-
 
     const tilesToAdd = [];
     const usedTileMapPrevious = this.usedTileMap;
     const usedTileMapNew = new Map<string, Tile>();
 
-
-    for (let i = 0; i < allTileIndices.length; i += 1) {
-      const tileIndex = allTileIndices[i];
+    for (const element of allTileIndices) {
+      const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       const tile = usedTileMapPrevious.get(tileID);
@@ -231,13 +223,10 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
         // Removing it from the previous map so that only remains the unused ones
         usedTileMapPrevious.delete(tileID);
-
-        // this.tileContainer.add(tile);
         this.scene.add(tile);
 
         if (this.onTileUpdate) {
-          // console.log("keep");
-          this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix);
+          this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
         }
       } else {
         // This tile is not in the pool
@@ -247,8 +236,8 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
     this.unusedTileList.push(...Array.from(usedTileMapPrevious.values()));
 
-    for (let i = 0; i < tilesToAdd.length; i += 1) {
-      const tileIndex = tilesToAdd[i];
+    for (const element of tilesToAdd) {
+      const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       let tile: Tile;
@@ -265,39 +254,11 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
       this.scene.add(tile);
       
       if (this.onTileUpdate) {
-        // console.log("repurposed");
-        this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix);
+        this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
       }
     }
 
     this.usedTileMap = usedTileMapNew;
-
-
-
-
-
-    // console.time("v0")
-    // for (let i = 0; i < allTileIndices.length; i += 1) {
-    //   const tileIndex = allTileIndices[i];
-    //   let tile: Tile;
-
-    //   if (this.tilePool.length >= i + 1) {
-    //     tile = this.tilePool[i];
-    //   } else {
-    //     const material = this.onSetTileMaterial(tileIndex);
-    //     tile = new Tile(this.tileGeometry, material);
-    //     this.tilePool.push(tile);
-    //   }
-
-    //   tile.setTileIndex(tileIndex);
-    //   this.tileContainer.add(tile);
-      
-    //   if (this.onTileUpdate) {
-    //     this.onTileUpdate(tile, matrix);
-    //   }
-    // }
-    // console.timeEnd("v0")
-    
   }
 
 
@@ -308,6 +269,5 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
-    // this.map.triggerRepaint();
   }
 }

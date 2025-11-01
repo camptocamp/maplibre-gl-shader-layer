@@ -182,11 +182,6 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
     },
   }); 
 
-
-  // Set to store the "z_x_y" of textures that cannot be loaded, so that we don't
-  // try to load them again and again
-  private nonExistingTextures: Set<string> = new Set();
-
   private readonly rasterEncoding: RasterEncoding;
   private readonly colormap: Colormap;
   private seriesAxisValue!: number;
@@ -211,8 +206,8 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
           glslVersion: GLSL3,
 
           uniforms: {
-            texBefore: { value: this.getTexture(tileIndex, this.seriesElementBefore.tileUrlPattern) },
-            texAfter: { value: this.getTexture(tileIndex, this.seriesElementAfter.tileUrlPattern) },
+            texBefore: { value: null },
+            texAfter: { value: null },
             seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
             seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
             seriesAxisValue: { value: this.seriesAxisValue },
@@ -241,15 +236,23 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       },
 
 
-      onTileUpdate: (tile: Tile, matrix: Mat4) => {
+      onTileUpdate: async (tile: Tile, _matrix: Mat4) => {
+        // TODO: Add a signal to cancel the fetching of the texture in case the series axis moves too fast
+        // and needs to skip/jump further.
+
+        const texBeforeAfter = await Promise.allSettled([
+          this.getTexture(tile.getTileIndex(), this.seriesElementBefore.tileUrlPattern),
+          this.getTexture(tile.getTileIndex(), this.seriesElementAfter.tileUrlPattern),
+        ])
+
         const mapProjection = this.map.getProjection();
         const tileIndeArray = tile.getTileIndexAsArray();
         const material = tile.material as RawShaderMaterial;
         const zoom = this.map.getZoom();
         // At z12+, the globe is no longer globe in Maplibre
         const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
-        material.uniforms.texBefore.value = this.getTexture(tile.getTileIndex(), this.seriesElementBefore.tileUrlPattern);
-        material.uniforms.texAfter.value = this.getTexture(tile.getTileIndex(), this.seriesElementAfter.tileUrlPattern);
+        material.uniforms.texBefore.value = texBeforeAfter[0].status === "fulfilled" ? texBeforeAfter[0].value : null;
+        material.uniforms.texAfter.value = texBeforeAfter[1].status === "fulfilled" ? texBeforeAfter[1].value : null;
         material.uniforms.seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
         material.uniforms.seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
         material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
@@ -268,41 +271,40 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   }
 
 
-  private getTexture(tileIndex: TileIndex, textureUrlPattern: string): Texture {
-      const tileIndexWrapped = wrapTileIndex(tileIndex);
-      const textureURL = this.tileUrlPrefix + textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
-        .replace("{y}", tileIndexWrapped.y.toString())
-        .replace("{z}", tileIndexWrapped.z.toString());
+    private getTexture(tileIndex: TileIndex, textureUrlPattern: string): Promise<Texture> {
 
-      let texture: Texture;
-      
-      if (this.texturePool.has(textureURL)) {
-        texture = this.texturePool.get(textureURL) as Texture;
-      } else {
-        
+      return new Promise((resolve, reject) => {
+        const tileIndexWrapped = wrapTileIndex(tileIndex);
+        const textureURL = this.tileUrlPrefix + textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
+          .replace("{y}", tileIndexWrapped.y.toString())
+          .replace("{z}", tileIndexWrapped.z.toString());
   
-        // texture = this.textureLoader.load(
-        texture = this.textureLoader.load(
-          textureURL,
+        if (this.texturePool.has(textureURL)) {
+          resolve(this.texturePool.get(textureURL) as Texture);
+        } else {
+          this.textureLoader.load(
+            textureURL,
+            
+            ( texture ) => {
+              texture.flipY = false;
+              this.texturePool.set(textureURL, texture);
+              resolve(texture);
+            },
           
-          ( texture ) => {
-            // console.log("SUCESS");
-          },
-        
-          // onProgress callback currently not supported
-          undefined,
-        
-          // onError callback
-          ( err ) => {
-            console.error( 'An error happened.' );
-          }
-        );      
-      }
-      texture.flipY = false;
-      this.texturePool.set(textureURL, texture);
-  
-      return texture;
+            // onProgress callback currently not supported
+            undefined,
+          
+            // onError callback
+            ( err ) => {
+              reject(new Error("Could not load texture."))
+            }
+          );      
+        }
+      });
     }
+
+
+
 
     /**
      * Get the range of values along the series axis.
