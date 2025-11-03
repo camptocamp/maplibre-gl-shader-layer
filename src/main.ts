@@ -1,6 +1,6 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
-import maplibregl from "maplibre-gl";
+import maplibregl, { MapMouseEvent } from "maplibre-gl";
 import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 import { TextureTiledLayer } from "./TextureTiledLayer";
@@ -134,6 +134,8 @@ async function initSeries() {
     glyphs,
     lang,
     hidePOIs: true,
+
+    // globe: false,
     // terrain: {
     //   pmtiles: pmtilesTerrain,
     //   encoding: "terrarium"
@@ -143,7 +145,7 @@ async function initSeries() {
   style = setLayerOpacity("water", 0.3, style);
 
   // Webgl layer not working well with Basemakit definition of globe 
-  style.projection = {type: "globe"};
+  // style.projection = {type: "mercator"};
 
   console.log(style);
   
@@ -183,27 +185,34 @@ async function initSeries() {
   const colormap = Colormap.fromColormapDescription(colormapDefinitionTemperatureTurbo);
   
 
-  // map.showTileBoundaries = true;
+  map.showTileBoundaries = true;
 
+  await new Promise((resolve) => map.on("load", resolve));
 
-  map.on("load", async () => {
-    const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
-      datasetSpecification: seriesInfo,
-      colormap,
-      colormapGradient: false,
-      tileUrlPrefix,
-    });
+  console.log("LOAD");
+  
+  const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
+    datasetSpecification: seriesInfo,
+    colormap,
+    colormapGradient: false,
+    tileUrlPrefix,
+  });
 
-    map.addLayer(layer, "water");
+  map.addLayer(layer, "water");
 
-    seriesSlider.addEventListener("input", () => {
-      const sliderTimestamp = parseFloat(seriesSlider.value);
-      layer.setSeriesAxisValue(sliderTimestamp);
-    })
+  seriesSlider.addEventListener("input", () => {
+    const sliderTimestamp = parseFloat(seriesSlider.value);
+    layer.setSeriesAxisValue(sliderTimestamp);
+  })
 
-    seriesSlider.addEventListener("pointerenter", () => {      
-      layer.prefetchSeriesTexture(-10, 10);
-    })
+  seriesSlider.addEventListener("pointerenter", () => {      
+    layer.prefetchSeriesTexture(-10, 10);
+  })
+
+  map.on("mousemove", async (e: MapMouseEvent) => {
+    
+    const pickingInfo = await layer.pick(e.lngLat)
+    console.log(pickingInfo);
   })
 
 }

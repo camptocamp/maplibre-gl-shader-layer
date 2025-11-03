@@ -6,13 +6,14 @@
 import QuickLRU from "quick-lru";
 import { type Texture, TextureLoader, RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
-import { clamp, wrapTileIndex, type TileIndex } from "./tools";
+import { clamp, debounce, pickImg, wgs84ToTileIndex, wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 // @ts-ignore
 import vertexShader from "./shaders/texture-tile.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/multi-channel-series-tile.f.glsl?raw";
 import type { Colormap } from "./colormap";
+import { LngLat } from "maplibre-gl";
 
 
 
@@ -287,7 +288,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
             textureURL,
             
             ( texture ) => {
-              console.log("fetched ", tileIndex, textureUrlPattern);
+              // console.log("fetched ", tileIndex, textureUrlPattern);
               texture.flipY = false;
               this.texturePool.set(textureURL, texture);
               resolve(texture);
@@ -416,6 +417,92 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       }
       
       await Promise.allSettled(fetchingPromiseList);
+    }
+
+
+    /**
+     * Get the value and unit at a given position, for the current series axis position.
+     */
+    async pick(lngLat: LngLat): Promise<{value: number, unit: string} | null> {
+      const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
+
+      // Getting zoom level of current displayed tiles
+      const z = tileIndices[0].z;
+
+      const tileToPickUnstrict = wgs84ToTileIndex(lngLat, z, false);
+      const tileIndexStrict = {
+        z,
+        x: Math.floor(tileToPickUnstrict.x),
+        y: Math.floor(tileToPickUnstrict.y),
+      } as TileIndex;
+
+      const texturesBeforeAfter = await Promise.allSettled([
+        await this.getTexture(tileIndexStrict, this.seriesElementBefore.tileUrlPattern),
+        await this.getTexture(tileIndexStrict, this.seriesElementAfter.tileUrlPattern),
+      ])
+
+      if (texturesBeforeAfter[0].status === "rejected" || texturesBeforeAfter[1].status === "rejected") {
+        return null;
+      }
+
+      const textureBefore = texturesBeforeAfter[0].value;
+      const textureAfter = texturesBeforeAfter[1].value;
+
+      const textureUnitPosition = [
+        tileToPickUnstrict.x - tileIndexStrict.x,
+        tileToPickUnstrict.y - tileIndexStrict.y
+      ] as [number, number];
+
+      const valuePixelBefore = pickImg(textureBefore.image, textureUnitPosition);
+      const valuePixelAfter = pickImg(textureAfter.image, textureUnitPosition);
+
+      if (!valuePixelBefore || !valuePixelAfter) return null;
+
+      const channels = Array.from(this.datasetSpecification.rasterEncoding.channels);
+      const valuePixelBeforeObj: Record<string, number> = {
+        r: valuePixelBefore[0],
+        g: valuePixelBefore[1],
+        b: valuePixelBefore[2],
+        a: valuePixelBefore[3],
+      };
+
+      const valuePixelAfterObj: Record<string, number> = {
+        r: valuePixelAfter[0],
+        g: valuePixelAfter[1],
+        b: valuePixelAfter[2],
+        a: valuePixelAfter[3],
+      };
+
+      let encodedValueBefore = 0;
+      let encodedValueAfter = 0;
+
+      if (channels.length === 1) {
+        encodedValueBefore = valuePixelBeforeObj[channels[0]];
+        encodedValueAfter = valuePixelAfterObj[channels[0]];
+      } else
+      
+      if (channels.length === 2) {
+        encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 + valuePixelBeforeObj[channels[1]];
+        encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 + valuePixelAfterObj[channels[1]];
+      } else
+      
+      if (channels.length === 3) {
+        encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 * 256 + valuePixelBeforeObj[channels[1]] * 256 + valuePixelBeforeObj[channels[2]];
+        encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 * 256 + valuePixelAfterObj[channels[1]] * 256 + valuePixelAfterObj[channels[2]];
+      } else {
+        return null;
+      }
+
+      const {polynomialOffset, polynomialSlope} = this.datasetSpecification.rasterEncoding;
+      const realWorldValueBefore = encodedValueBefore * polynomialSlope + polynomialOffset;
+      const realWorldValueAfter = encodedValueAfter * polynomialSlope + polynomialOffset;
+      const ratioAfter = this.seriesElementAfter.seriesAxisValue === this.seriesElementBefore.seriesAxisValue ? realWorldValueBefore : (this.seriesAxisValue - this.seriesElementBefore.seriesAxisValue) / (this.seriesElementAfter.seriesAxisValue - this.seriesElementBefore.seriesAxisValue);
+      const realWorldValue = ratioAfter * realWorldValueAfter + (1 - ratioAfter) * realWorldValueBefore
+
+      return {
+        value: realWorldValue,
+        unit: this.datasetSpecification.pixelUnit,
+      }
     }
 
 }

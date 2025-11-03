@@ -1,4 +1,4 @@
-import maplibregl, { CoveringTilesOptions, CoveringZoomOptions, IMercatorCoordinate, IntersectionResult, IReadonlyTransform, MercatorCoordinate, Point, Point2D } from "maplibre-gl";
+import maplibregl, { CoveringTilesOptions, CoveringZoomOptions, IMercatorCoordinate, IntersectionResult, IReadonlyTransform, LngLat, MercatorCoordinate, Point, Point2D } from "maplibre-gl";
 import {getTileBBox} from '@mapbox/whoots-js';
 import { Mat4 } from "./ShaderTiledLayer";
 
@@ -53,6 +53,20 @@ function mercatorToTileIndex(
   }
 
   return tileIndex;
+}
+
+
+export function wgs84ToTileIndex(
+  position: LngLat,
+  zoom: number,
+  strict = true
+): TileIndex {
+  const merCoord = MercatorCoordinate.fromLngLat(position);
+  return mercatorToTileIndex(
+    [merCoord.x, merCoord.y],
+    zoom,
+    strict
+  );
 }
 
 /**
@@ -296,3 +310,23 @@ export function clamp(range: [number, number], value: number): number {
 
   return value;
 }
+
+/**
+ * Get the pixel value in an HTMLImageElement with a nearest neighbor approach.
+ * unitPosition is a texture position, meaning in interval [0, 1] 
+ */
+export function pickImg(img: HTMLImageElement, unitPosition: [number, number]): Uint8ClampedArray | null {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) return null;
+
+  const x = Math.floor(unitPosition[0] * img.width);
+  const y = Math.floor(unitPosition[1] * img.height);
+
+  ctx.drawImage(img, 0, 0);
+  return ctx.getImageData(x, y, 1, 1).data;
+}
+
