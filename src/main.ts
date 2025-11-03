@@ -110,6 +110,12 @@ async function initSeries() {
   const seriesSlider = document.getElementById("series-slider") as HTMLInputElement;
   if (!seriesSlider) throw new Error("Slider not working");
 
+  const pickindDisplay = document.getElementById("picking-display");
+  if (!pickindDisplay) throw new Error("Picking display not working");
+
+  const dateDisplay = document.getElementById("date-display");
+  if (!dateDisplay) throw new Error("Date display not working");
+
   // const tileUrlPrefix = "http://127.0.0.1:8083/";
   const tileUrlPrefix = "http://127.0.0.1:8084/"
   const seriesInfoUrl = `${tileUrlPrefix}tileset_info.json`;
@@ -194,7 +200,7 @@ async function initSeries() {
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
     datasetSpecification: seriesInfo,
     colormap,
-    colormapGradient: false,
+    colormapGradient: true,
     tileUrlPrefix,
   });
 
@@ -203,16 +209,30 @@ async function initSeries() {
   seriesSlider.addEventListener("input", () => {
     const sliderTimestamp = parseFloat(seriesSlider.value);
     layer.setSeriesAxisValue(sliderTimestamp);
+
+    // We could take the one from the slider, but the layer add a safety clapming
+    const seriesAxisValue =  layer.getSeriesAxisValue();
+    const sliderDate = new Date(seriesAxisValue * 1000);
+
+    const dateStr = new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'short'
+    }).format(sliderDate)
+
+    dateDisplay.innerText = dateStr;
   })
 
   seriesSlider.addEventListener("pointerenter", () => {      
     layer.prefetchSeriesTexture(-10, 10);
   })
 
-  map.on("mousemove", async (e: MapMouseEvent) => {
-    
-    const pickingInfo = await layer.pick(e.lngLat)
-    console.log(pickingInfo);
+  map.on("mousemove", async (e: MapMouseEvent) => {    
+    try{
+      const pickingInfo = await layer.pick(e.lngLat)
+      pickindDisplay.innerText = `${pickingInfo?.value.toFixed(2)}${pickingInfo?.unit}`;
+    } catch(err) {
+      pickindDisplay.innerText = "-"      
+    }
   })
 
 }
