@@ -4,11 +4,12 @@ import maplibregl, { MapMouseEvent } from "maplibre-gl";
 import { ShaderTiledLayer } from "./ShaderTiledLayer";
 import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
 import { TextureTiledLayer } from "./TextureTiledLayer";
-import { getStyle, setLayerOpacity } from "basemapkit";
+import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
+import { temperatureTurbo, wind } from "./colormap-collection";
 
 
 async function initMono() {
@@ -99,9 +100,26 @@ async function initMono() {
 
 
 
+const seriesConfig = {
+  temperature_2m: {
+    colormap: temperatureTurbo,
+    style: "spectre-purple",
+    swapWaterEarth: false,
+    placelayerBeforeId: "water",
+  },
+
+  wind_speed_10m_UNCLAMPED: {
+    colormap: wind,
+    style: "spectre-negative",
+    swapWaterEarth: true,
+    placelayerBeforeId: "earth",
+  },
+} as const;
 
 
-async function initSeries() {
+type WeatherVariableId = keyof typeof seriesConfig;
+
+async function initSeriesTemperatures(weatherVariableId: WeatherVariableId) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -116,9 +134,8 @@ async function initSeries() {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  // const tileUrlPrefix = "http://127.0.0.1:8083/";
-  const tileUrlPrefix = "http://127.0.0.1:8084/"
-  const seriesInfoUrl = `${tileUrlPrefix}tileset_info.json`;
+  const tileUrlPrefix = "http://127.0.0.1:8083/"
+  const seriesInfoUrl = `${tileUrlPrefix}${weatherVariableId}.json`;
   const seriesInfoResponse = await fetch(seriesInfoUrl);
   const seriesInfo = await seriesInfoResponse.json() as MultiChannelSeriesTiledLayerSpecification;
 
@@ -134,7 +151,7 @@ async function initSeries() {
   const pmtilesTerrain = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles";
   const terrainTileEncoding = "terrarium";
 
-  let style = getStyle("spectre-purple", {
+  let style = getStyle(seriesConfig[weatherVariableId].style, {
     pmtiles,
     sprite,
     glyphs,
@@ -149,6 +166,11 @@ async function initSeries() {
   });
 
   style = setLayerOpacity("water", 0.3, style);
+  style = setLayerOpacity("earth", 0.3, style);
+
+  if (seriesConfig[weatherVariableId].swapWaterEarth) {
+    style = swapLayers("earth", "water", style);
+  }
 
   // Webgl layer not working well with Basemakit definition of globe 
   // style.projection = {type: "mercator"};
@@ -166,32 +188,10 @@ async function initSeries() {
 
   console.log(map);
 
-  // Colormap on the temperature scale (degree Celcius)
-  // using the Google Turbo colormap definition
-  const colormapDefinitionTemperatureTurbo = [
-    -65, "#30123b",
-    -55, "#4040a2",
-    -40, "#466be3",
-    -30, "#4293ff",
-    -20, "#28bbec",
-    -15, "#18dcc3",
-    -10, "#31f299",
-    -5, "#6bfe64",
-    0, "#a2fc3c",
-    5, "#cced34",
-    10, "#edd03a",
-    15, "#fdad35",
-    20, "#e76b18",
-    25, "#ec520f",
-    30, "#d23105",
-    40, "#ac1701",
-    55, "#7a0403",
-  ];
-
-  const colormap = Colormap.fromColormapDescription(colormapDefinitionTemperatureTurbo);
+  const colormap = Colormap.fromColormapDescription(seriesConfig[weatherVariableId].colormap);
   
 
-  map.showTileBoundaries = true;
+  // map.showTileBoundaries = true;
 
   await new Promise((resolve) => map.on("load", resolve));
 
@@ -204,7 +204,7 @@ async function initSeries() {
     tileUrlPrefix,
   });
 
-  map.addLayer(layer, "water");
+  map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
 
   seriesSlider.addEventListener("input", () => {
     const sliderTimestamp = parseFloat(seriesSlider.value);
@@ -237,5 +237,5 @@ async function initSeries() {
 
 }
 
-initSeries();
+initSeriesTemperatures("wind_speed_10m_UNCLAMPED");
 

@@ -6,7 +6,7 @@
 import QuickLRU from "quick-lru";
 import { type Texture, TextureLoader, RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
-import { clamp, debounce, pickImg, wgs84ToTileIndex, wrapTileIndex, type TileIndex } from "./tools";
+import { clamp, pickImg, wgs84ToTileIndex, wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 // @ts-ignore
 import vertexShader from "./shaders/texture-tile.v.glsl?raw";
