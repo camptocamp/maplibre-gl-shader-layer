@@ -9,7 +9,7 @@ import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
-import { temperatureTurbo, wind } from "./colormap-collection";
+import { blueGreenCreamPercent, bluePercent, cloudCoverGray, infernoPercent, magmaPercent, percent, presureBlueWhiteRed, purpleRedCreamPercent, redYellowGreenPercent, temperatureTurbo, wind } from "./colormap-collection";
 
 
 async function initMono() {
@@ -108,18 +108,44 @@ const seriesConfig = {
     placelayerBeforeId: "water",
   },
 
-  wind_speed_10m_UNCLAMPED: {
+  wind_speed_10m: {
     colormap: wind,
     style: "spectre-negative",
     swapWaterEarth: true,
     placelayerBeforeId: "earth",
   },
+
+  presure_msl: {
+    colormap: presureBlueWhiteRed,
+    style: "spectre-purple",
+    swapWaterEarth: false,
+    placelayerBeforeId: "water",
+  },
+
+  cloud_cover_low: {
+    colormap: cloudCoverGray,
+    style: "spectre-red",
+    swapWaterEarth: false,
+    placelayerBeforeId: "earth_line",
+  },
+
+  relative_humidity_2m: {
+    colormap: bluePercent,
+    style: "spectre-red",
+    swapWaterEarth: false,
+    placelayerBeforeId: "earth_line",
+  }
 } as const;
+
+
+
+
+
 
 
 type WeatherVariableId = keyof typeof seriesConfig;
 
-async function initSeriesTemperatures(weatherVariableId: WeatherVariableId) {
+async function initSeries(weatherVariableId: WeatherVariableId) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -207,7 +233,7 @@ async function initSeriesTemperatures(weatherVariableId: WeatherVariableId) {
   map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
 
   seriesSlider.addEventListener("input", () => {
-    const sliderTimestamp = parseFloat(seriesSlider.value);
+    const sliderTimestamp = Number.parseFloat(seriesSlider.value);
     layer.setSeriesAxisValue(sliderTimestamp);
 
     // We could take the one from the slider, but the layer add a safety clapming
@@ -237,5 +263,5 @@ async function initSeriesTemperatures(weatherVariableId: WeatherVariableId) {
 
 }
 
-initSeriesTemperatures("wind_speed_10m_UNCLAMPED");
+initSeries("relative_humidity_2m");
 

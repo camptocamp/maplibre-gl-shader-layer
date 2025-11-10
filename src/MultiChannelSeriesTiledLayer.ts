@@ -475,7 +475,7 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         g: valuePixelAfter[1],
         b: valuePixelAfter[2],
         a: valuePixelAfter[3],
-      };
+      };      
 
       let encodedValueBefore = 0;
       let encodedValueAfter = 0;
