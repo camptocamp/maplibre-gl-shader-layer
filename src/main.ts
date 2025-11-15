@@ -9,7 +9,7 @@ import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
-import { blueGreenCreamPercent, bluePercent, cloudCoverGray, infernoPercent, magmaPercent, percent, presureBlueWhiteRed, purpleRedCreamPercent, redYellowGreenPercent, temperatureTurbo, wind } from "./colormap-collection";
+import { blueGreenCreamPercent, bluePercent, cloudCoverGray, cloudCoverTransparent, infernoPercent, magmaPercent, percent, presureBlueWhiteRed, purpleRedCreamPercent, redYellowGreenPercent, temperatureTurbo, wind } from "./colormap-collection";
 
 
 async function initMono() {
@@ -106,6 +106,10 @@ const seriesConfig = {
     style: "spectre-purple",
     swapWaterEarth: false,
     placelayerBeforeId: "water",
+    layerOpacity: [
+      {layerId: "water", opacity: 0.3},
+      {layerId: "earth", opacity: 0.3},
+    ]
   },
 
   wind_speed_10m: {
@@ -113,6 +117,10 @@ const seriesConfig = {
     style: "spectre-negative",
     swapWaterEarth: true,
     placelayerBeforeId: "earth",
+    layerOpacity: [
+      {layerId: "water", opacity: 0.3},
+      {layerId: "earth", opacity: 0.3},
+    ]
   },
 
   presure_msl: {
@@ -120,6 +128,10 @@ const seriesConfig = {
     style: "spectre-purple",
     swapWaterEarth: false,
     placelayerBeforeId: "water",
+    layerOpacity: [
+      {layerId: "water", opacity: 0.3},
+      {layerId: "earth", opacity: 0.3},
+    ]
   },
 
   cloud_cover_low: {
@@ -129,11 +141,22 @@ const seriesConfig = {
     placelayerBeforeId: "earth_line",
   },
 
+  // cloud_cover_low: {
+  //   colormap: cloudCoverTransparent,
+  //   style: "avenue",
+  //   swapWaterEarth: false,
+  //   placelayerBeforeId:  undefined,
+  // },
+
   relative_humidity_2m: {
-    colormap: bluePercent,
-    style: "spectre-red",
-    swapWaterEarth: false,
-    placelayerBeforeId: "earth_line",
+    colormap: magmaPercent,
+    style: "spectre-negative",
+    swapWaterEarth: true,
+    placelayerBeforeId: "earth",
+    layerOpacity: [
+      {layerId: "water", opacity: 0.3},
+      {layerId: "earth", opacity: 0.3},
+    ]
   }
 } as const;
 
@@ -191,8 +214,12 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     // }
   });
 
-  style = setLayerOpacity("water", 0.3, style);
-  style = setLayerOpacity("earth", 0.3, style);
+
+  if ("layerOpacity" in seriesConfig[weatherVariableId]) {
+    for (const opacityInstruction of seriesConfig[weatherVariableId].layerOpacity as Array<{layerId: string, opacity: number}>) {
+      style = setLayerOpacity(opacityInstruction.layerId , opacityInstruction.opacity, style);
+    }
+  }
 
   if (seriesConfig[weatherVariableId].swapWaterEarth) {
     style = swapLayers("earth", "water", style);
@@ -230,8 +257,12 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     tileUrlPrefix,
   });
 
-  map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
-
+  if (seriesConfig[weatherVariableId].placelayerBeforeId) {
+    map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
+  } else {
+    map.addLayer(layer);
+  }
+  
   seriesSlider.addEventListener("input", () => {
     const sliderTimestamp = Number.parseFloat(seriesSlider.value);
     layer.setSeriesAxisValue(sliderTimestamp);
@@ -249,7 +280,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   })
 
   seriesSlider.addEventListener("pointerenter", () => {      
-    layer.prefetchSeriesTexture(-10, 10);
+    layer.prefetchSeriesTexture(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
   })
 
   map.on("mousemove", async (e: MapMouseEvent) => {    

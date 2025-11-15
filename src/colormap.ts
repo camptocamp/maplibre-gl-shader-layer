@@ -1,7 +1,10 @@
 import { CanvasTexture } from "three";
+import Color, { ColorLike } from 'color';
 
 export type ColormapDescription = (number | string)[];
-type RgbArrayColor = [number, number, number];
+type RgbaArray = [number, number, number, number];
+const TRANSPARENT_BLACK: RgbaArray = [0, 0, 0, 0];
+
 type ColormapImageCreationOption = {
   /**
    * Whether the canvas is a horizontal image (`true`) or vertical image (`false`).
@@ -23,26 +26,8 @@ type ColormapImageCreationOption = {
 };
 
 export class Colormap {
-  public static readonly validHexColorCharacters = [
-    '0',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    'A',
-    'B',
-    'C',
-    'D',
-    'E',
-    'F',
-  ];
   private readonly keyPointValues: number[];
-  private readonly rgbColors: RgbArrayColor[];
+  private readonly rgbColors: RgbaArray[];
   private readonly minValue: number;
   private readonly maxValue: number;
 
@@ -55,34 +40,37 @@ export class Colormap {
     this.maxValue = colormapDescription.at(-2) as number;
     this.keyPointValues = colormapDescription.filter((_, i) => i % 2 === 0) as number[];
     this.rgbColors = (colormapDescription.filter((_, i) => i % 2 === 1) as string[]).map(
-      (hexColor) => Colormap.hexToRgb(hexColor),
+      (hexColor) => Colormap.colorToRgba(hexColor),
     );
+
+    console.log(this);
+    
   }
 
-  getRgbColorAt(value: number, gradient = true): RgbArrayColor {
+  getRgbColorAt(value: number, gradient = true): RgbaArray {
     if (value <= this.minValue) {
-      return this.rgbColors[0] as RgbArrayColor;
+      return this.rgbColors[0];
     }
 
     if (value >= this.maxValue) {
-      return this.rgbColors.at(-1) as RgbArrayColor;
+      return this.rgbColors.at(-1) as RgbaArray;
     }
 
     for (let i = 0; i < this.keyPointValues.length - 1; i += 1) {
       if (value === this.keyPointValues[i]) {
-        return this.rgbColors[i] as RgbArrayColor;
+        return this.rgbColors[i];
       }
 
-      const lowerKeyPointValue = this.keyPointValues[i] as number;
-      const upperKeyPointValue = this.keyPointValues[i + 1] as number;
+      const lowerKeyPointValue = this.keyPointValues[i];
+      const upperKeyPointValue = this.keyPointValues[i + 1];
 
       if (value > lowerKeyPointValue && value < upperKeyPointValue) {
-        const lowerColor = this.rgbColors[i] as RgbArrayColor;
+        const lowerColor = this.rgbColors[i];
         if (!gradient) {
           return lowerColor;
         }
 
-        const upperColor = this.rgbColors[i + 1] as RgbArrayColor;
+        const upperColor = this.rgbColors[i + 1];
         const lowerToUpperKeyPointDistance = upperKeyPointValue - lowerKeyPointValue;
         const lowerKeyPointToValueDistance = value - lowerKeyPointValue;
         const weightUpper = lowerKeyPointToValueDistance / lowerToUpperKeyPointDistance;
@@ -92,11 +80,13 @@ export class Colormap {
           Math.trunc(lowerColor[0] * weightLower + upperColor[0] * weightUpper),
           Math.trunc(lowerColor[1] * weightLower + upperColor[1] * weightUpper),
           Math.trunc(lowerColor[2] * weightLower + upperColor[2] * weightUpper),
-        ] as RgbArrayColor;
+          Math.trunc(lowerColor[3] * weightLower + upperColor[3] * weightUpper),
+        ] as RgbaArray;
       }
     }
+
     // Should not happen
-    return [0, 0, 0];
+    return TRANSPARENT_BLACK;
   }
 
   /**
@@ -115,17 +105,15 @@ export class Colormap {
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const imageDataArray = imageData.data;
-
     const valueSpan = this.maxValue - this.minValue;
     const valueStep = valueSpan / size;
 
     for (let i = 0; i < size; i += 1) {
       const color = this.getRgbColorAt(this.minValue + i * valueStep, gradient);
-
       imageDataArray[i * 4] = color[0];
       imageDataArray[i * 4 + 1] = color[1];
       imageDataArray[i * 4 + 2] = color[2];
-      imageDataArray[i * 4 + 3] = 255;
+      imageDataArray[i * 4 + 3] = color[3];
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -213,27 +201,6 @@ export class Colormap {
     return new CanvasTexture(canvasEl);
   }
 
-  /**
-   * @returns true if the color is a valid hex color, false otherwise.
-   */
-  static isValidHexColor(color: unknown): boolean {
-    if (typeof color !== 'string') {
-      return false;
-    }
-
-    if (!color.startsWith('#')) {
-      return false;
-    }
-
-    if (!(color.length === 4 || color.length === 7)) {
-      return false;
-    }
-
-    const colorCharacters = Array.from(color.slice(1).toUpperCase());
-    return colorCharacters.every((char) =>
-      Colormap.validHexColorCharacters.includes(char),
-    );
-  }
 
   /**
    * Splits the colormap description in two arrays: an array with only the keyPointValues,
@@ -269,7 +236,9 @@ export class Colormap {
     const allKeyPointValuesAreNumbers = keyPointValues.every(
       (val) => typeof val === 'number',
     );
-    const allColorsAreHex = colors.every((val) => Colormap.isValidHexColor(val));
+
+
+    const allColorsAreHex = colors.every((val) => Colormap.isColorValid(val));
 
     // Must not have duplicates in the keypoint values
     if (new Set(keyPointValues).size !== keyPointValues.length) {
@@ -296,34 +265,6 @@ export class Colormap {
     return pairs.flat();
   }
 
-  /**
-   * Convert a hex color such as #FFF into #FFFFFF
-   */
-  static hexToSixHex(hexColor: string): string {
-    if (hexColor.length === 7) {
-      return hexColor;
-    }
-    return `#${hexColor[1]}${hexColor[1]}${hexColor[2]}${hexColor[2]}${hexColor[3]}${hexColor[3]}`;
-  }
-
-  /**
-   * Converts a hex color into [r, g, b]
-   */
-  static hexToRgb(hexColor: string): RgbArrayColor {
-    const hexSix = Colormap.hexToSixHex(hexColor).slice(1);
-    return [
-      Number.parseInt(hexSix.slice(0, 2), 16),
-      Number.parseInt(hexSix.slice(2, 4), 16),
-      Number.parseInt(hexSix.slice(4, 6), 16),
-    ];
-  }
-
-  /**
-   * Converts an RGB array color into a hex color string
-   */
-  static rgbToHex(rgbColor: RgbArrayColor): string {
-    return `#${((1 << 24) | (rgbColor[0] << 16) | (rgbColor[1] << 8) | rgbColor[2]).toString(16).slice(1)}`;
-  }
 
   /**
    * Factory function that performs some verification before instantiating a Colormap
@@ -339,4 +280,35 @@ export class Colormap {
     const ordered = Colormap.orderColormapDescription(colormapDescription);
     return new Colormap(ordered);
   }
+
+  /**
+   * Returns true if the color is valid, false if not
+   */
+  static isColorValid(color: unknown): boolean {
+    try {
+      Color(color as ColorLike);
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  /**
+   * Turns any color into a RGBA array (with alpha in [0, 255])
+   */
+  static colorToRgba(color: ColorLike): RgbaArray {
+    try {
+      const colorObj = Color(color);
+      return [
+        Math.floor(colorObj.red()),
+        Math.floor(colorObj.green()),
+        Math.floor(colorObj.blue()),
+        Math.floor(colorObj.alpha() * 255),
+      ];
+    } catch(e) {
+      console.error(e);
+      return TRANSPARENT_BLACK;
+    }
+  }
+
 }

@@ -45,6 +45,15 @@ export const cloudCoverGray = [
   50, "#8ba8bb",     // Light blue-gray (transition point)
   75, "#b5c4cd",     // Light warm gray
   100, "#f5fbff",    // Very light gray (overcast)
+];
+
+export const cloudCoverTransparent = [
+  0, "rgba(255, 255, 255, 0)",
+  25, "rgba(255, 255, 255, 0)",
+  50, "rgba(255, 255, 255, 0.1)",
+  75, "rgba(255, 255, 255, 0.2)",
+  95, "rgba(255, 255, 255, 0.4)",
+  100, "rgba(255, 255, 255, 0.8)",
 ]
 
 // export const cloudCoverGray = [

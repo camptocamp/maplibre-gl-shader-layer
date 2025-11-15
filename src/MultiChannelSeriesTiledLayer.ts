@@ -403,8 +403,8 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       const series = this.datasetSpecification.series;
       const fetchingPromiseList = [];
 
-      const seriesIndexStart = this.indexSeriesElementBefore + deltaBefore;
-      const seriesIndexEnd = this.indexSeriesElementBefore + deltaAfter;
+      const seriesIndexStart = Math.max(0, this.indexSeriesElementBefore + deltaBefore);
+      const seriesIndexEnd = Math.min(series.length - 1, this.indexSeriesElementBefore + deltaAfter);
 
       let counter = 0;
 
