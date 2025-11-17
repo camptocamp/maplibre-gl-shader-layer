@@ -1,15 +1,12 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
-import maplibregl, { MapMouseEvent } from "maplibre-gl";
-import { ShaderTiledLayer } from "./ShaderTiledLayer";
-import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer";
-import { TextureTiledLayer } from "./TextureTiledLayer";
+import maplibregl, { type MapMouseEvent } from "maplibre-gl";
 import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
-import { blueGreenCreamPercent, bluePercent, cloudCoverGray, cloudCoverTransparent, infernoPercent, magmaPercent, percent, presureBlueWhiteRed, purpleRedCreamPercent, redYellowGreenPercent, temperatureTurbo, wind } from "./colormap-collection";
+import * as colormapCollection from "./colormap-collection";
 
 
 async function initMono() {
@@ -102,62 +99,56 @@ async function initMono() {
 
 const seriesConfig = {
   temperature_2m: {
-    colormap: temperatureTurbo,
+    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, {min: -25, max: 40, reverse: false}),
     style: "spectre-purple",
     swapWaterEarth: false,
     placelayerBeforeId: "water",
     layerOpacity: [
-      {layerId: "water", opacity: 0.3},
-      {layerId: "earth", opacity: 0.3},
+      {layerId: "water", opacity: 0.2},
     ]
   },
 
   wind_speed_10m: {
-    colormap: wind,
+    colormap: Colormap.fromColormapDescription(colormapCollection.bathymetry, {min: 0, max: 22}),
     style: "spectre-negative",
     swapWaterEarth: true,
     placelayerBeforeId: "earth",
     layerOpacity: [
-      {layerId: "water", opacity: 0.3},
       {layerId: "earth", opacity: 0.3},
     ]
   },
 
   presure_msl: {
-    colormap: presureBlueWhiteRed,
-    style: "spectre-purple",
-    swapWaterEarth: false,
-    placelayerBeforeId: "water",
-    layerOpacity: [
-      {layerId: "water", opacity: 0.3},
-      {layerId: "earth", opacity: 0.3},
-    ]
-  },
-
-  cloud_cover_low: {
-    colormap: cloudCoverGray,
-    style: "spectre-red",
-    swapWaterEarth: false,
+    colormap: Colormap.fromColormapDescription(colormapCollection.presureBlueWhiteRed),
+    style: "spectre",
+    swapWaterEarth: true,
     placelayerBeforeId: "earth_line",
   },
 
   // cloud_cover_low: {
-  //   colormap: cloudCoverTransparent,
-  //   style: "avenue",
+  //   colormap: Colormap.fromColormapDescription(colormapCollection.cloudCoverGray),
+  //   style: "spectre-red",
   //   swapWaterEarth: false,
-  //   placelayerBeforeId:  undefined,
+  //   placelayerBeforeId: "earth_line",
   // },
 
-  relative_humidity_2m: {
-    colormap: magmaPercent,
-    style: "spectre-negative",
-    swapWaterEarth: true,
-    placelayerBeforeId: "earth",
-    layerOpacity: [
-      {layerId: "water", opacity: 0.3},
-      {layerId: "earth", opacity: 0.3},
-    ]
-  }
+  // // cloud_cover_low: {
+  // //   colormap: Colormap.fromColormapDescription(colormapCollection.cloudCoverTransparent),
+  // //   style: "avenue",
+  // //   swapWaterEarth: false,
+  // //   placelayerBeforeId:  undefined,
+  // // },
+
+  // relative_humidity_2m: {
+  //   colormap: Colormap.fromColormapDescription(colormapCollection.magmaPercent),
+  //   style: "spectre-negative",
+  //   swapWaterEarth: true,
+  //   placelayerBeforeId: "earth",
+  //   layerOpacity: [
+  //     {layerId: "water", opacity: 0.3},
+  //     {layerId: "earth", opacity: 0.3},
+  //   ]
+  // }
 } as const;
 
 
@@ -216,7 +207,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
 
   if ("layerOpacity" in seriesConfig[weatherVariableId]) {
-    for (const opacityInstruction of seriesConfig[weatherVariableId].layerOpacity as Array<{layerId: string, opacity: number}>) {
+    for (const opacityInstruction of seriesConfig[weatherVariableId].layerOpacity) {
       style = setLayerOpacity(opacityInstruction.layerId , opacityInstruction.opacity, style);
     }
   }
@@ -241,9 +232,6 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
   console.log(map);
 
-  const colormap = Colormap.fromColormapDescription(seriesConfig[weatherVariableId].colormap);
-  
-
   // map.showTileBoundaries = true;
 
   await new Promise((resolve) => map.on("load", resolve));
@@ -252,7 +240,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
     datasetSpecification: seriesInfo,
-    colormap,
+    colormap: seriesConfig[weatherVariableId].colormap,
     colormapGradient: true,
     tileUrlPrefix,
   });
@@ -280,7 +268,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   })
 
   seriesSlider.addEventListener("pointerenter", () => {      
-    layer.prefetchSeriesTexture(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+    layer.prefetchSeriesTexture(-15, 15);
   })
 
   map.on("mousemove", async (e: MapMouseEvent) => {    
@@ -294,5 +282,4 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
 }
 
-initSeries("relative_humidity_2m");
-
+initSeries("presure_msl");

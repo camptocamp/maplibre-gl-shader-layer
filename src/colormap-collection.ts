@@ -1,34 +1,14 @@
-/**
- * Colormap based on TURBO
- * suitable for temperatures in °C in the range [-65, 55]
- */
-export const temperatureTurbo = [
-  -65, "#30123b",
-  -55, "#4040a2",
-  -40, "#466be3",
-  -30, "#4293ff",
-  -20, "#28bbec",
-  -15, "#18dcc3",
-  -10, "#31f299",
-  -5, "#6bfe64",
-  0, "#a2fc3c",
-  5, "#cced34",
-  10, "#edd03a",
-  15, "#fdad35",
-  20, "#e76b18",
-  25, "#ec520f",
-  30, "#d23105",
-  40, "#ac1701",
-  55, "#7a0403",
-];
+import type { ColormapDescription } from "./colormap";
+import turboColormapData from "./turbo-colormap-description.json";
+
+
 
 export const presureBlueWhiteRed = [
-  900_00, "#000064",
-  950_00, "#0000FF",
-  980_00, "#0000FF",
-  1000_00, "#FFFFFF",
-  1020_00, "#FF0000",
-  1080_00, "#640000"
+  940_00, "#03039c",
+  990_00, "#5555FF",
+  1013_00, "#FFFFFF",
+  1025_00, "#FF5555",
+  1040_00, "#630000"
 ];
 
 // export const cloudCoverGray = [
@@ -39,12 +19,12 @@ export const presureBlueWhiteRed = [
 //   100, "#1c2124",
 // ]
 
-export const cloudCoverGray = [
-  0, "#1a4d6b",      // Deep blue (clear sky)
-  25, "#4a7a9a",     // Medium blue
-  50, "#8ba8bb",     // Light blue-gray (transition point)
-  75, "#b5c4cd",     // Light warm gray
-  100, "#f5fbff",    // Very light gray (overcast)
+export const teal = [
+  0, "#1a4d6b",
+  0.25, "#4a7a9a",
+  0.50, "#8ba8bb",
+  0.75, "#b5c4cd",
+  1, "#f5fbff",
 ];
 
 export const cloudCoverTransparent = [
@@ -56,47 +36,49 @@ export const cloudCoverTransparent = [
   100, "rgba(255, 255, 255, 0.8)",
 ]
 
-// export const cloudCoverGray = [
-//   0, "#1a4d6b",      // Deep blue (clear sky)
-//   25, "#2d6a8f",     // Medium blue
-//   50, "#4b8bb5",     // Bright blue (end of blue range)
-//   75, "#c9a87c",     // Warm tan/ochre
-//   100, "#f5e6d3",    // Light cream (overcast)
-// ]
-
-// export const cloudCoverGray = [
-//   0, "#0066cc",      // Vibrant blue
-//   15, "#1a8cff",     // Bright blue
-//   30, "#4da6ff",     // Sky blue
-//   45, "#80c1ff",     // Light bright blue
-//   50, "#b3daff",     // Very light blue (transition)
-//   55, "#ffd699",     // Light warm peach
-//   70, "#ffb84d",     // Bright orange
-//   85, "#ff9933",     // Vibrant orange
-//   100, "#ff8800",    // Deep bright orange
-// ]
-
-// export const cloudCoverGray = [
-//   0, "#440154",      // Deep purple
-//   20, "#3b528b",     // Purple-blue
-//   40, "#21918c",     // Teal
-//   60, "#5ec962",     // Green
-//   80, "#fde724",     // Yellow
-//   100, "#fde724",    // Bright yellow
-// ]
+export const cream = [
+  0, "#1a4d6b",
+  0.25, "#2d6a8f",
+  0.5, "#4b8bb5",
+  0.75, "#c9a87c",
+  1, "#f5e6d3",
+]
 
 
-// export const cloudCoverGray = [
-//   0, "#1a3a5c",      // Dark blue
-//   20, "#2d5f7c",     // Medium blue
-//   40, "#4a8a9c",     // Blue-teal
-//   60, "#7ab5ac",     // Teal-green
-//   80, "#b0d8b4",     // Light green
-//   100, "#e8f5d8",    // Very light green/cream
-// ]
+
+export const lagoon = [
+  0, "#1a3a5c",
+  0.2, "#2d5f7c",
+  0.4, "#4a8a9c",
+  0.6, "#7ab5ac",
+  0.8, "#b0d8b4",
+  1, "#e8f5d8",
+]
 
 
-export const gradientColormap = [
+
+
+
+
+
+
+
+
+
+
+
+// Homemade colormaps
+
+export const poison = [
+  0, "#000917",
+  0.07, "#001940",
+  0.52, "#279165",
+  0.76, "#5BD95B",
+  0.90, "#C6FA9B",
+  1, "#C6FA9B",
+]
+
+export const twilight = [
   0.00, "#003d5c",
   0.05, "#004d73",
   0.10, "#005d8a",
@@ -120,112 +102,174 @@ export const gradientColormap = [
   1.00, "#fffcbb"
 ];
 
-
-const maxWindSpeed = 22;
-export const wind = [
-  0.00 * maxWindSpeed, "#003d5c",
-  0.05 * maxWindSpeed, "#004d73",
-  0.10 * maxWindSpeed, "#005d8a",
-  0.15 * maxWindSpeed, "#006da0",
-  0.20 * maxWindSpeed, "#1e7db5",
-  0.25 * maxWindSpeed, "#4a8dc9",
-  0.30 * maxWindSpeed, "#759ddb",
-  0.35 * maxWindSpeed, "#9eadeb",
-  0.40 * maxWindSpeed, "#c5bdf8",
-  0.45 * maxWindSpeed, "#e0cdf9",
-  0.50 * maxWindSpeed, "#f5ddf4",
-  0.55 * maxWindSpeed, "#ffdeec",
-  0.60 * maxWindSpeed, "#ffdfe5",
-  0.65 * maxWindSpeed, "#ffe1dd",
-  0.70 * maxWindSpeed, "#ffe4d6",
-  0.75 * maxWindSpeed, "#ffe8cf",
-  0.80 * maxWindSpeed, "#ffecc9",
-  0.85 * maxWindSpeed, "#fff0c4",
-  0.90 * maxWindSpeed, "#fff4c0",
-  0.95 * maxWindSpeed, "#fff8bd",
-  1.00 * maxWindSpeed, "#fffcbb"
-];
-
-
-const hundred = 100;
-export const percent = [
-  0.00 * hundred, "#003d5c",
-  0.05 * hundred, "#004d73",
-  0.10 * hundred, "#005d8a",
-  0.15 * hundred, "#006da0",
-  0.20 * hundred, "#1e7db5",
-  0.25 * hundred, "#4a8dc9",
-  0.30 * hundred, "#759ddb",
-  0.35 * hundred, "#9eadeb",
-  0.40 * hundred, "#c5bdf8",
-  0.45 * hundred, "#e0cdf9",
-  0.50 * hundred, "#f5ddf4",
-  0.55 * hundred, "#ffdeec",
-  0.60 * hundred, "#ffdfe5",
-  0.65 * hundred, "#ffe1dd",
-  0.70 * hundred, "#ffe4d6",
-  0.75 * hundred, "#ffe8cf",
-  0.80 * hundred, "#ffecc9",
-  0.85 * hundred, "#fff0c4",
-  0.90 * hundred, "#fff4c0",
-  0.95 * hundred, "#fff8bd",
-  1.00 * hundred, "#fffcbb"
-];
-
-export const magmaPercent = [
-  0,   "#000004", // very dark purple (start)
-  10,  "#140e36",
-  25,  "#3b0f70",
-  40,  "#731f81",
-  55,  "#b73779",
-  70,  "#f1605d",
-  85,  "#fd9f6b",
-  100, "#fcfdbf", // pale yellow (end)
-];
-
-
-export const infernoPercent = [
-  0,   "#000004", // deep black-purple
-  10,  "#1f0c48",
-  25,  "#51127c",
-  40,  "#832681",
-  55,  "#c03a76",
-  70,  "#ed6925",
-  85,  "#fb9f06",
-  100, "#fcffa4", // bright yellow-white
-];
-
-
-export const redYellowGreenPercent = [
-  0, "#420000",
-  27, "#A11B1B",
-  73, "#EBD059",
-  100, "#A2FF99",
-]
-
-export const purpleRedCreamPercent = [
+export const redVelvet = [
   0, "#2B0C47",
-  7, "#4B1370",
-  50, "#DB1616",
-  93, "#FFDDAD",
-  100, "#FFF9ED",
+  0.07, "#4B1370",
+  0.5, "#DB1616",
+  0.93, "#FFDDAD",
+  1, "#FFF9ED",
+]
+
+export const ember = [
+  0, "#420000",
+  0.1, "#521303",
+  0.27, "#A11B1B",
+  0.73, "#EBD059",
+  0.93, "#b5ffad",
+  1, "#e8ffe6"
 ]
 
 
-export const blueGreenCreamPercent = [
-  0, "#000917",
-  7, "#001940",
-  52, "#279165",
-  76, "#5BD95B",
-  90, "#C6FA9B",
-  100, "#C6FA9B",
+
+// Classic colormaps
+
+export const hot = [
+  0, [0, 0, 0],
+  0.3, [230, 0, 0],
+  0.6, [255,210,0],
+  1, [255,255,255],
+]
+
+export const spring = [
+  0, [255,0,255],
+  1, [255,255,0],
+]
+
+export const summer = [
+  0, [0,128,102],
+  1, [255,255,102],
+]
+
+export const autumn = [
+  0, [255,0,0],
+  1, [255,255,0],
+]
+
+export const winter = [
+  0, [0,0,255],
+  1, [0,255,128],
+]
+
+export const yiorrd = [
+  0, [128,0,38],
+  0.125, [189,0,38],
+  0.25, [227,26,28],
+  0.375, [252,78,42],
+  0.5, [253,141,60],
+  0.625, [254,178,76],
+  0.75, [254,217,118],
+  0.875, [255,237,160],
+  1, [255,255,204],
+]
+
+export const blackbody = [
+  0, [0,0,0],
+  0.2, [230,0,0],
+  0.4, [230,210,0],
+  0.7, [255,255,255],
+  1, [160,200,255],
+]
+
+export const viridis = [
+  0, [68,1,84],
+  0.13, [71,44,122],
+  0.25, [59,81,139],
+  0.38, [44,113,142],
+  0.5, [33,144,141],
+  0.63, [39,173,129],
+  0.75, [92,200,99],
+  0.88, [170,220,50],
+  1, [253,231,37]
+]
+
+export const inferno = [
+  0, [0,0,4],
+  0.13, [31,12,72],
+  0.25, [85,15,109],
+  0.38, [136,34,106],
+  0.5, [186,54,85],
+  0.63, [227,89,51],
+  0.75, [249,140,10],
+  0.88, [249,201,50],
+  1, [252,255,164]
+]
+
+export const magma = [
+  0, [0,0,4],
+  0.13, [28,16,68],
+  0.25, [79,18,123],
+  0.38, [129,37,129],
+  0.5, [181,54,122],
+  0.63, [229,80,100],
+  0.75, [251,135,97],
+  0.88, [254,194,135],
+  1, [252,253,191]
+]
+
+export const bathymetry = [
+  0, [40,26,44],
+  0.13, [59,49,90],
+  0.25, [64,76,139],
+  0.38, [63,110,151],
+  0.5, [72,142,158],
+  0.63, [85,174,163],
+  0.75, [120,206,163],
+  0.88, [187,230,172],
+  1, [253,254,204]
+]
+
+export const density = [
+  0, [54,14,36],
+  0.13, [89,23,80],
+  0.25, [110,45,132],
+  0.38, [120,77,178],
+  0.5, [120,113,213],
+  0.63, [115,151,228],
+  0.75, [134,185,227],
+  0.88, [177,214,227],
+  1, [230,241,241]
+]
+
+export const salinity = [
+  0, [42,24,108],
+  0.13, [33,50,162],
+  0.25, [15,90,145],
+  0.38, [40,118,137],
+  0.5, [59,146,135],
+  0.63, [79,175,126],
+  0.75, [120,203,104],
+  0.88, [193,221,100],
+  1, [253,239,154]
+]
+
+export const temperature = [
+  0, [4,35,51],
+  0.13, [23,51,122],
+  0.25, [85,59,157],
+  0.38, [129,79,143],
+  0.5, [175,95,130],
+  0.63, [222,112,101],
+  0.75, [249,146,66],
+  0.88, [249,196,65],
+  1, [232,250,91]
+]
+
+export const velocityBlue = [
+  0, [17,32,64],
+  0.13, [35,52,116],
+  0.25, [29,81,156],
+  0.38, [31,113,162],
+  0.5, [50,144,169],
+  0.63, [87,173,176],
+  0.75, [149,196,189],
+  0.88, [203,221,211],
+  1, [254,251,230]
 ]
 
 
-export const bluePercent = [
-  0, "#08001C",
-  5, "#06044D",
-  35, "#090979",
-  91, "#4FE2FF",
-  100, "#FFFFFF",
-]
+// Turbo is so long it's loaded from an external JSON
+export const turbo: ColormapDescription = []
+for (let i = 0; i < turboColormapData.length; i += 1) {
+  const turboStop = turboColormapData[i];
+  turbo.push(i / 256, [~~(turboStop[0] * 255), ~~(turboStop[1] * 255), ~~(turboStop[2] * 255)])
+}

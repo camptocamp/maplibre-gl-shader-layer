@@ -1,7 +1,7 @@
 import { CanvasTexture } from "three";
-import Color, { ColorLike } from 'color';
+import Color, { type ColorLike } from 'color';
 
-export type ColormapDescription = (number | string)[];
+export type ColormapDescription = (number | ColorLike)[];
 type RgbaArray = [number, number, number, number];
 const TRANSPARENT_BLACK: RgbaArray = [0, 0, 0, 0];
 
@@ -248,12 +248,18 @@ export class Colormap {
     return allKeyPointValuesAreNumbers && allColorsAreHex;
   }
 
+
   /**
-   * @returns a new colormap description with the keypoint values sorted in ascending order.
+   * Factory function that performs some verification before instantiating a Colormap
+   * (the Colormap constructor is private)
    */
-  static orderColormapDescription(
-    colormapDescription: ColormapDescription,
-  ): ColormapDescription {
+  static fromColormapDescription(colormapDescription: ColormapDescription, scaling?: {min: number, max: number, reverse?: boolean}): Colormap {
+    const isValid = Colormap.isColormapDescriptionValid(colormapDescription);
+
+    if (!isValid) {
+      throw new Error('The provided colormap description is invalid');
+    }
+
     const pairs: Array<[number, string]> = [];
     for (let i = 0; i < colormapDescription.length; i += 2) {
       pairs.push([
@@ -262,22 +268,40 @@ export class Colormap {
       ]);
     }
     pairs.sort((a, b) => a[0] - b[0]);
-    return pairs.flat();
-  }
 
+    console.log("pairs", pairs);
 
-  /**
-   * Factory function that performs some verification before instantiating a Colormap
-   * (the Colormap constructor is private)
-   */
-  static fromColormapDescription(colormapDescription: ColormapDescription): Colormap {
-    const isValid = Colormap.isColormapDescriptionValid(colormapDescription);
+    if (scaling) {
+      if(scaling.min > scaling.max) {
+        throw new Error("Colormap scaling min must be greater than max.");
+      }
 
-    if (!isValid) {
-      throw new Error('The provided colormap description is invalid');
+      const currentMin = pairs[0][0];
+      const currentMax = pairs[pairs.length - 1][0];
+      const currentSpan = currentMax - currentMin;
+      const targetSpan = scaling.max - scaling.min;
+
+      if (scaling.reverse === true) {
+        const pairsClone = structuredClone(pairs);
+
+        for (let i = 0; i < pairs.length; i += 1) {
+          const pair = pairs[i];
+          const pairClone = pairsClone[pairsClone.length - 1 - i];
+          pair[0] = (((pair[0] - currentMin) / currentSpan) * targetSpan) + scaling.min;
+          pair[1] = pairClone[1];
+        }
+      } else {
+        for (const pair of pairs) {
+          pair[0] = (((pair[0] - currentMin) / currentSpan) * targetSpan) + scaling.min;
+        }
+      }
+
+      
     }
 
-    const ordered = Colormap.orderColormapDescription(colormapDescription);
+    const ordered = pairs.flat();
+    console.log("ordered", ordered);
+    
     return new Colormap(ordered);
   }
 
