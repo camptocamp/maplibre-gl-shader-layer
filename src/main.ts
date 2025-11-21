@@ -285,7 +285,11 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   map.on("mousemove", async (e: MapMouseEvent) => {    
     try{
       const pickingInfo = await layer.pick(e.lngLat)
-      pickindDisplay.innerText = `${pickingInfo?.value.toFixed(2)}${pickingInfo?.unit}`;
+      if (pickingInfo) {
+        pickindDisplay.innerText = `${pickingInfo?.value.toFixed(2)}${pickingInfo?.unit}`;
+      } else {
+        pickindDisplay.innerText = "[no data]" 
+      }
     } catch(err) {
       pickindDisplay.innerText = "-"      
     }

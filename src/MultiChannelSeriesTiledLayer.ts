@@ -475,7 +475,12 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         g: valuePixelAfter[1],
         b: valuePixelAfter[2],
         a: valuePixelAfter[3],
-      };      
+      };    
+      
+      // Nodata
+      if (valuePixelBeforeObj.a === 0 || valuePixelAfterObj.a === 0) {        
+        return null;
+      }
 
       let encodedValueBefore = 0;
       let encodedValueAfter = 0;
