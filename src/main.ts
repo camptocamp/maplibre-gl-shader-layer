@@ -149,6 +149,17 @@ const seriesConfig = {
   //     {layerId: "earth", opacity: 0.3},
   //   ]
   // }
+
+
+  index: {
+    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, {min: -15, max: 25, reverse: false}),
+    style: "spectre-purple",
+    swapWaterEarth: false,
+    placelayerBeforeId: "water",
+    layerOpacity: [
+      {layerId: "water", opacity: 0.1},
+    ]
+  },
 } as const;
 
 
@@ -282,4 +293,4 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
 }
 
-initSeries("presure_msl");
+initSeries("index");

@@ -67,12 +67,14 @@ vec4 getTextureColor(float realWorldValue) {
 }
 
 
-float getRealWorldValue(sampler2D tex) {
+float getRealWorldValue(sampler2D tex, inout bool isNodata) {
   // Testing bicubic texture interpolation, but input data is too
   // pixalated to make it worth it
   // vec4 texColor = textureBicubic(tex, vPositionUnit);
 
   vec4 texColor = texture(tex, vPositionUnit);
+
+  isNodata = (texColor.a == 0.0);
 
   // For this test, we use the define RASTER_ENCODING_CHANNELS to know on what channel
   // the value to display is encoded
@@ -99,11 +101,16 @@ float getRealWorldValue(sampler2D tex) {
 
 
 void main()  {
-  float realWorldValueBefore = getRealWorldValue(texBefore);
-  float realWorldValueAfter = getRealWorldValue(texAfter);
+  bool texBeforeIsNodata = false;
+  bool texAfterIsNodata = false;
+  float realWorldValueBefore = getRealWorldValue(texBefore, texBeforeIsNodata);
+  float realWorldValueAfter = getRealWorldValue(texAfter, texAfterIsNodata);
+
+  if (texBeforeIsNodata || texAfterIsNodata) {
+    discard;
+  }
 
   float ratioAfter = seriesAxisValueAfter == seriesAxisValueBefore ? 0.0 : (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);
   float interpolatedRealWorldValue = ratioAfter * realWorldValueAfter + (1. - ratioAfter) * realWorldValueBefore;
-
   fragColor = getTextureColor(interpolatedRealWorldValue);
 }
