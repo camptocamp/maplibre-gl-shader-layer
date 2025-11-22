@@ -179,6 +179,10 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   const seriesSlider = document.getElementById("series-slider") as HTMLInputElement;
   if (!seriesSlider) throw new Error("Slider not working");
 
+  const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
+  if (!opacitySlider) throw new Error("Slider not working");
+  
+
   const pickindDisplay = document.getElementById("picking-display");
   if (!pickindDisplay) throw new Error("Picking display not working");
 
@@ -256,6 +260,9 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     tileUrlPrefix,
   });
 
+  console.log("layer", layer);
+  
+
   if (seriesConfig[weatherVariableId].placelayerBeforeId) {
     map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
   } else {
@@ -280,6 +287,10 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
   seriesSlider.addEventListener("pointerenter", () => {      
     layer.prefetchSeriesTexture(-15, 15);
+  })
+
+  opacitySlider.addEventListener("input", () => {
+    layer.setOpacity(parseFloat(opacitySlider.value))
   })
 
   map.on("mousemove", async (e: MapMouseEvent) => {    

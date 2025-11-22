@@ -41,10 +41,7 @@ export class Colormap {
     this.keyPointValues = colormapDescription.filter((_, i) => i % 2 === 0) as number[];
     this.rgbColors = (colormapDescription.filter((_, i) => i % 2 === 1) as string[]).map(
       (hexColor) => Colormap.colorToRgba(hexColor),
-    );
-
-    console.log(this);
-    
+    );    
   }
 
   getRgbColorAt(value: number, gradient = true): RgbaArray {
@@ -269,8 +266,6 @@ export class Colormap {
     }
     pairs.sort((a, b) => a[0] - b[0]);
 
-    console.log("pairs", pairs);
-
     if (scaling) {
       if(scaling.min > scaling.max) {
         throw new Error("Colormap scaling min must be greater than max.");
@@ -295,13 +290,9 @@ export class Colormap {
           pair[0] = (((pair[0] - currentMin) / currentSpan) * targetSpan) + scaling.min;
         }
       }
-
-      
     }
 
-    const ordered = pairs.flat();
-    console.log("ordered", ordered);
-    
+    const ordered = pairs.flat();    
     return new Colormap(ordered);
   }
 
@@ -330,7 +321,6 @@ export class Colormap {
         Math.floor(colorObj.alpha() * 255),
       ];
     } catch(e) {
-      console.error(e);
       return TRANSPARENT_BLACK;
     }
   }

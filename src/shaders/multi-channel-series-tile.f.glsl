@@ -3,6 +3,7 @@ precision highp int;
 
 uniform sampler2D texBefore;
 uniform sampler2D texAfter;
+uniform float opacity;
 uniform float seriesAxisValueBefore;
 uniform float seriesAxisValueAfter;
 uniform float seriesAxisValue;
@@ -113,4 +114,5 @@ void main()  {
   float ratioAfter = seriesAxisValueAfter == seriesAxisValueBefore ? 0.0 : (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);
   float interpolatedRealWorldValue = ratioAfter * realWorldValueAfter + (1. - ratioAfter) * realWorldValueBefore;
   fragColor = getTextureColor(interpolatedRealWorldValue);
+  fragColor.a *= opacity; 
 }

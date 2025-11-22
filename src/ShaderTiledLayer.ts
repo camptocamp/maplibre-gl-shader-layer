@@ -89,6 +89,11 @@ export type ShaderTiledLayerOptions = {
   onTileUpdate?: UpdateTileMaterialFunction;
 
   tileZoomFitting?: TileZoomFitting;
+
+  /**
+   * Opacity of the layer
+   */
+  opacity?: number,
 };
 
 export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
@@ -113,6 +118,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected onSetTileMaterial: SetTileMaterialFunction;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.floor;
+  protected opacity = 1;
 
   constructor(id: string, options: ShaderTiledLayerOptions) {
     this.id = id;
@@ -123,6 +129,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     this.showBeyondMaxZoom = options.showBeyondMaxZoom ?? true;
     this.onSetTileMaterial = options.onSetTileMaterial;
     this.onTileUpdate = options.onTileUpdate ?? null;
+    this.opacity = Math.max(0, Math.min(options.opacity ?? 1, 1));
 
     if (options && options.tileZoomFitting) {
       if (options.tileZoomFitting === "CEIL") {
@@ -197,7 +204,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     console.warn("not implemented yet");
   }
 
-  prerender(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {    
+  render(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
     this.shouldShowCurrent = this.shouldShow();
 
     // Escape if not rendering
@@ -259,15 +266,17 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     }
 
     this.usedTileMap = usedTileMapNew;
-  }
 
-
-  render(gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
-    // Escape if not rendering
-    if (!this.shouldShowCurrent) return;
-
+    // Actual rendering
     this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  setOpacity(opacity: number) {
+    this.opacity = Math.max(0, Math.min(opacity, 1));
+    if (this.map) {
+      this.map.triggerRepaint();
+    }
   }
 }
