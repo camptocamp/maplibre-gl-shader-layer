@@ -6,6 +6,7 @@ import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
+import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer"
 import * as colormapCollection from "./colormap-collection";
 
 
@@ -305,6 +306,9 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
       pickindDisplay.innerText = "-"      
     }
   })
+
+  const dummyLayer = new DummyGradientTiledLayer("dummy")
+  map.addLayer(dummyLayer)
 
 }
 

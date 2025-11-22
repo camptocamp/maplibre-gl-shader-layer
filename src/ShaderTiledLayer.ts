@@ -9,7 +9,7 @@ import {
   WebGLRenderer,
   type RawShaderMaterial,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport, tileBoundsUnwrappedToTileList2 } from "./tools";
+import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport } from "./tools";
 import { Tile } from "./Tile";
 
 

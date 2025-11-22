@@ -9,7 +9,7 @@ import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 import { wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 // @ts-ignore
-import vertexShader from "./shaders/texture-tile.v.glsl?raw";
+import vertexShader from "./shaders/globe-tile.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/multi-channel-tile.f.glsl?raw";
 import type { Colormap } from "./colormap";

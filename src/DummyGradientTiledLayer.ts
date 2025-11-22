@@ -4,10 +4,10 @@
  */
 
 
-import { DoubleSide, GLSL3, RawShaderMaterial, Uniform, Vector4 } from "three";
+import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
 import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
 // @ts-ignore
-import vertexShader from "./shaders/dummy-gradient.v.glsl?raw";
+import vertexShader from "./shaders/globe-tile.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "./tools";
@@ -18,6 +18,7 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
   constructor(id: string) {
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {
+        const mapProjection = this.map.getProjection();
         const material = new RawShaderMaterial({
           // This automatically adds the top-level instruction:
           // #version 300 es
@@ -25,11 +26,13 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
 
           uniforms: {
             zoom: { value: this.map.getZoom() },
+            tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
+            isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
           },
           
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
-          side: DoubleSide,
+          side: BackSide,
 					transparent: true,
           depthTest: false,
           // wireframe: true,
@@ -39,11 +42,20 @@ export class DummyGradientTiledLayer extends ShaderTiledLayer {
       },
 
 
-
       onTileUpdate: (tile: Tile, matrix: Mat4) => {
         (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();
-      }
 
+        const mapProjection = this.map.getProjection();
+        const tileIndeArray = tile.getTileIndexAsArray();
+        const mat = tile.material as RawShaderMaterial;
+        const zoom = this.map.getZoom();
+        // At z12+, the globe is no longer globe in Maplibre
+        const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
+
+        mat.uniforms.zoom.value = zoom;
+        mat.uniforms.isGlobe.value = isGlobe;
+        (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+      }
     });
 
   }

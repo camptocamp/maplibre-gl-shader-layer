@@ -3,7 +3,7 @@ precision highp int;
 
 uniform float zoom;
 in vec3 vPosition;
-in vec3 vPositionUnit;
+in vec2 vPositionUnit;
 out vec4 fragColor;
 
 void main()  {
