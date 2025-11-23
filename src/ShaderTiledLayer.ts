@@ -9,7 +9,7 @@ import {
   WebGLRenderer,
   type RawShaderMaterial,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport } from "./tools";
+import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport, wrapTileIndex } from "./tools";
 import { Tile } from "./Tile";
 
 
@@ -181,21 +181,36 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   }
 
   protected listTilesIndicesForMapBounds() {
+    const mapProjection = this.map.getProjection();
+    const zoom = this.map.getZoom();
+    const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
+
     const z = this.getAppropriateZoomLevel();
     const tbu = getTileBoundsUnwrapped(this.map, z);
     // The candidates are strictly based on axis-align bounding box, so when map is pitched and rotated,
     // the list of candidates needs to be pruned from all the tiles that are not in viewport
-    const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
-    // const tileIndicesCandidates = tileBoundsUnwrappedToTileList2(this.map);
+    let tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
+
+    if (isGlobe) {
+      const tileMap = new Map<string, TileIndex>();
+      for (const tile of tileIndicesCandidates) {
+        const wrappedTile = wrapTileIndex(tile);
+        tileMap.set(`${wrappedTile.x}_${wrappedTile.y}_${wrappedTile.z}`, wrappedTile)
+      }
+
+      tileIndicesCandidates = Array.from(tileMap.values());
+    }
     
     if (this.map.getZoom() >= z) {
-      return tileIndicesCandidates;
+      return tileIndicesCandidates
     }
 
     const canvas = this.map.getCanvas();
     const canvasWidth = canvas.clientWidth;
     const canvasHeight = canvas.clientHeight;
-    const tileIndicesFiltered = tileIndicesCandidates.filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight));    
+    const tileIndicesFiltered = tileIndicesCandidates
+      .filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight))
+      
     return tileIndicesFiltered;
   }
 
@@ -214,7 +229,6 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     // this.tileContainer.clear();
     this.scene.clear()
     const allTileIndices = this.listTilesIndicesForMapBounds();
-
     const tilesToAdd = [];
     const usedTileMapPrevious = this.usedTileMap;
     const usedTileMapNew = new Map<string, Tile>();

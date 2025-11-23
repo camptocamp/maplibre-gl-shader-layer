@@ -6,7 +6,7 @@ import { Protocol } from "pmtiles";
 import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
 import { Colormap } from "./colormap";
 import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
-import { DummyGradientTiledLayer } from "./DummyGradientTiledLayer"
+import { DaylightLayer } from "./DaylightLayer"
 import * as colormapCollection from "./colormap-collection";
 
 
@@ -214,7 +214,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     lang,
     hidePOIs: true,
 
-    // globe: false,
+    globe: false,
     // terrain: {
     //   pmtiles: pmtilesTerrain,
     //   encoding: "terrarium"
@@ -307,8 +307,8 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     }
   })
 
-  const dummyLayer = new DummyGradientTiledLayer("dummy")
-  map.addLayer(dummyLayer)
+  const daylightLayer = new DaylightLayer("daylight")
+  map.addLayer(daylightLayer)
 
 }
 
