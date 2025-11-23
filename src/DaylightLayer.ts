@@ -12,6 +12,7 @@ import vertexShader from "./shaders/globe-tile.v.glsl?raw";
 import fragmentShader from "./shaders/daylight.f.glsl?raw";
 import type { TileIndex } from "./tools";
 import type { Tile } from "./Tile";
+import { Colormap } from "./colormap";
 
 export type DaylightLayerOptions = {
   date?: Date,
@@ -20,7 +21,15 @@ export type DaylightLayerOptions = {
 
 export class DaylightLayer extends ShaderTiledLayer {
   private date: Date;
+
   constructor(id: string, options: DaylightLayerOptions = {}) {
+    const colormap = Colormap.fromColormapDescription([
+      -10, "rgba(21, 32, 69, 0.3)",
+      0, "rgba(21, 32, 69, 0.3)",
+      3, "rgba(21, 32, 69, 0.0)",
+    ]);
+
+
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {
         const mapProjection = this.map.getProjection();
@@ -30,6 +39,9 @@ export class DaylightLayer extends ShaderTiledLayer {
           glslVersion: GLSL3,
 
           uniforms: {
+            colormapTex: { value: colormap.getTexture({gradient: true}) },
+            colormapRangeMin: { value: colormap.getRange().min },
+            colormapRangeMax: { value: colormap.getRange().max },
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
@@ -68,5 +80,12 @@ export class DaylightLayer extends ShaderTiledLayer {
     this.date = options.date ?? new Date();
   }
 
+
+  setDate(date: Date) {
+    this.date = date;
+    if (this.map) {
+      this.map.triggerRepaint();
+    }
+  }
 
 }

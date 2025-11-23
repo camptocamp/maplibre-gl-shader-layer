@@ -190,7 +190,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  const tileUrlPrefix = "http://127.0.0.1:8083/"
+  const tileUrlPrefix = "http://127.0.0.1:8084/"
   const seriesInfoUrl = `${tileUrlPrefix}${weatherVariableId}.json`;
   const seriesInfoResponse = await fetch(seriesInfoUrl);
   const seriesInfo = await seriesInfoResponse.json() as MultiChannelSeriesTiledLayerSpecification;
@@ -214,7 +214,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     lang,
     hidePOIs: true,
 
-    globe: false,
+    // globe: false,
     // terrain: {
     //   pmtiles: pmtilesTerrain,
     //   encoding: "terrarium"
@@ -252,7 +252,12 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
   await new Promise((resolve) => map.on("load", resolve));
 
+
   console.log("LOAD");
+
+  const daylightLayer = new DaylightLayer("daylight")
+  map.addLayer(daylightLayer)
+
   
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
     datasetSpecification: seriesInfo,
@@ -283,6 +288,8 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
       timeStyle: 'short'
     }).format(sliderDate)
 
+    daylightLayer.setDate(sliderDate);
+
     dateDisplay.innerText = dateStr;
   })
 
@@ -307,9 +314,8 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     }
   })
 
-  const daylightLayer = new DaylightLayer("daylight")
-  map.addLayer(daylightLayer)
+  
 
 }
 
-initSeries("index");
+initSeries("temperature_2m");

@@ -4,6 +4,9 @@ precision highp int;
 #define PI 3.141592653589793
 #define RAD (PI / 180.0)
 
+uniform float colormapRangeMin;
+uniform float colormapRangeMax;
+uniform sampler2D colormapTex;
 uniform float date;
 uniform float zoom;
 uniform vec3 tileIndex;
@@ -125,6 +128,18 @@ vec2 tileToLonLat(vec3 tileIndex, vec2 positionUnit) {
 }
 
 
+// Scales a value from the colormap range (in real-world unit)
+// to [0, 1]
+float rescaleToTexture(float realWorldValue) {
+  return (realWorldValue - colormapRangeMin) / (colormapRangeMax - colormapRangeMin);
+}
+
+// Looks up the colormaps color from a given real world unit
+vec4 getTextureColor(float realWorldValue) {
+  float unitPosition = rescaleToTexture(realWorldValue);
+  return texture(colormapTex, vec2(unitPosition, 0.5));
+}
+
 
 
 void main()  {
@@ -137,8 +152,8 @@ void main()  {
   float azimuthDeg = sunAzimuth * 180.0 / PI;
   float altitudeDeg = sunAltitude * 180.0 / PI; // 90° is zenith, 0° is at horizon level
 
-  // vec3 nightColor = vec3(21./255., 32./255., 69./255.);
-  // fragColor = vec4(nightColor.rgb, 0.5);
+  vec3 nightColor = vec3(21./255., 32./255., 69./255.);
+  fragColor = vec4(nightColor.rgb, 0.5);
 
   // if (altitudeDeg <= 0.) {
     
@@ -146,5 +161,5 @@ void main()  {
   //   fragColor.a = 0.;
   // }
 
-  fragColor = vec4(altitudeDeg, altitudeDeg, altitudeDeg , 0.5);
+  fragColor = getTextureColor(altitudeDeg);
 }
