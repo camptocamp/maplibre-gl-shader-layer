@@ -9,8 +9,13 @@ uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
 uniform float date;
 uniform float zoom;
+
 uniform vec3 tileIndex;
-in vec3 vPosition;
+
+uniform float days;
+uniform float sunCoordDec;
+uniform float sunCoordRa;
+
 in vec2 vPositionUnit;
 in vec2 vLonLat;
 out vec4 fragColor;
@@ -83,9 +88,9 @@ float altitude(float H, float phi, float dec) {
 // Input: vLonLat (vec2 with longitude, latitude in degrees)
 //        timestamp (float in seconds since Unix epoch)
 // Output: vec2(azimuth, altitude) in radians
-vec2 getSunPosition(vec2 vLonLat, float timestamp) {
-    float lng = vLonLat.x;
-    float lat = vLonLat.y;
+vec2 getSunPosition(vec2 lonLat, float timestamp) {
+    float lng = lonLat.x;
+    float lat = lonLat.y;
     
     float lw = RAD * -lng;
     float phi = RAD * lat;
@@ -93,6 +98,28 @@ vec2 getSunPosition(vec2 vLonLat, float timestamp) {
     
     float dec, ra;
     sunCoords(d, dec, ra);
+    
+    float H = siderealTime(d, lw) - ra;
+    
+    return vec2(
+        azimuth(H, phi, dec),
+        altitude(H, phi, dec)
+    );
+}
+
+
+
+
+vec2 getSunPosition_2(vec2 lonLat) {
+    float lng = lonLat.x;
+    float lat = lonLat.y;
+    
+    float lw = RAD * -lng;
+    float phi = RAD * lat;
+    float d = days;
+    
+    float dec = sunCoordDec;
+    float ra = sunCoordRa;
     
     float H = siderealTime(d, lw) - ra;
     
@@ -121,6 +148,7 @@ vec2 tileToLonLat(vec3 tileIndex, vec2 positionUnit) {
     // Inverse Mercator formula for latitude
     highp float mercatorY = PI - 2.0 * PI * globalY;
     highp float lat = atan(sinh(mercatorY)) * 180.0 / PI;
+    // highp float lat = (2.0 * atan(exp(mercatorY)) - PI * 0.5) * 180.0 / PI;
     // Alternative formula (equivalent):
     // highp float lat = (2.0 * atan(exp(mercatorY)) - PI * 0.5) * 180.0 / PI;
     
@@ -146,20 +174,14 @@ void main()  {
   // vec2 sunPos = getSunPosition(vLonLat, date);
   highp vec2 lonLat = tileToLonLat(tileIndex, vPositionUnit);
 
-  vec2 sunPos = getSunPosition(lonLat, date);
+  vec2 sunPos = getSunPosition_2(lonLat);
+
+
   float sunAzimuth = sunPos.x;   // in radians
   float sunAltitude = sunPos.y;  // in radians
   float azimuthDeg = sunAzimuth * 180.0 / PI;
   float altitudeDeg = sunAltitude * 180.0 / PI; // 90° is zenith, 0° is at horizon level
-
-  vec3 nightColor = vec3(21./255., 32./255., 69./255.);
-  fragColor = vec4(nightColor.rgb, 0.5);
-
-  // if (altitudeDeg <= 0.) {
-    
-  // } else {
-  //   fragColor.a = 0.;
-  // }
-
   fragColor = getTextureColor(altitudeDeg);
+
+//   fragColor = vec4(lonLat.x + 45., 0., 0., 0.8);
 }

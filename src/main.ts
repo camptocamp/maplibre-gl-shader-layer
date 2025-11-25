@@ -190,7 +190,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  const tileUrlPrefix = "http://127.0.0.1:8084/"
+  const tileUrlPrefix = "http://127.0.0.1:8083/"
   const seriesInfoUrl = `${tileUrlPrefix}${weatherVariableId}.json`;
   const seriesInfoResponse = await fetch(seriesInfoUrl);
   const seriesInfo = await seriesInfoResponse.json() as MultiChannelSeriesTiledLayerSpecification;
@@ -256,7 +256,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   console.log("LOAD");
 
   const daylightLayer = new DaylightLayer("daylight")
-  map.addLayer(daylightLayer)
+  map.addLayer(daylightLayer, "earth_line")
 
   
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
@@ -298,7 +298,7 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   })
 
   opacitySlider.addEventListener("input", () => {
-    layer.setOpacity(parseFloat(opacitySlider.value))
+    layer.setOpacity(Number.parseFloat(opacitySlider.value))
   })
 
   map.on("mousemove", async (e: MapMouseEvent) => {    
@@ -310,6 +310,8 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
         pickindDisplay.innerText = "[no data]" 
       }
     } catch(err) {
+      console.log(err);
+      
       pickindDisplay.innerText = "-"      
     }
   })

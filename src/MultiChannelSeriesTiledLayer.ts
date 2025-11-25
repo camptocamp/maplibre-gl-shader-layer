@@ -14,6 +14,7 @@ import vertexShader from "./shaders/globe-tile.v.glsl?raw";
 import fragmentShader from "./shaders/multi-channel-series-tile.f.glsl?raw";
 import type { Colormap } from "./colormap";
 import { LngLat } from "maplibre-gl";
+import { RemoteTileTextureManager } from "./RemoteTileTextureManager";
 
 
 
@@ -168,21 +169,21 @@ export type MultiChannelSeriesTiledLayerOptions = {
    */
   seriesAxisValue?: number,
 
+  /**
+   * Prefix to the tile url
+   */
   tileUrlPrefix?: string,
+
+  /**
+   * A texture manager can be provided. This can be interesting when multiple
+   * layers are using the same textures.
+   * If not provided, a default one will be added internaly to this layer.
+   */
+  remoteTileTextureManager?: RemoteTileTextureManager
 }
 
 
 export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
-  private readonly texturePool: QuickLRU<string, Texture> = new QuickLRU({
-    // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-    maxSize: 10000,
-
-    onEviction(_key: string, value: Texture) {
-      console.log("freeing texture GPU memory");
-      value.dispose();
-    },
-  }); 
-
   private readonly rasterEncoding: RasterEncoding;
   private readonly colormap: Colormap;
   private seriesAxisValue!: number;
@@ -191,9 +192,8 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
   private indexSeriesElementBefore = 0;
   private seriesElementAfter!: SeriesElement;
   private readonly tileUrlPrefix: string;
-  private readonly textureLoader = new TextureLoader();
   private readonly colormapGradient;
-  private unavailableTextures = new Set();
+  private readonly remoteTileTextureManager: RemoteTileTextureManager;
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
     super(id, {
@@ -202,7 +202,6 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
         const mapProjection = this.map.getProjection();
-
         const material = new RawShaderMaterial({
           // This automatically adds the top-level instruction:
           // #version 300 es
@@ -245,8 +244,8 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
         // and needs to skip/jump further.
 
         const texBeforeAfter = await Promise.allSettled([
-          this.getTexture(tile.getTileIndex(), this.seriesElementBefore.tileUrlPattern),
-          this.getTexture(tile.getTileIndex(), this.seriesElementAfter.tileUrlPattern),
+          this.remoteTileTextureManager.getTexture(tile.getTileIndex(), `${this.tileUrlPrefix}${this.seriesElementBefore.tileUrlPattern}`),
+          this.remoteTileTextureManager.getTexture(tile.getTileIndex(), `${this.tileUrlPrefix}${this.seriesElementAfter.tileUrlPattern}`),
         ])
 
         const mapProjection = this.map.getProjection();
@@ -267,257 +266,222 @@ export class MultiChannelSeriesTiledLayer extends ShaderTiledLayer {
       }
     });
 
+    
+
     this.colormapGradient = options.colormapGradient ?? true;
     this.tileUrlPrefix = options.tileUrlPrefix ?? "";
     this.datasetSpecification = options.datasetSpecification;
     this.rasterEncoding = options.datasetSpecification.rasterEncoding;
     this.colormap = options.colormap;
     this.setSeriesAxisValue(options.seriesAxisValue ?? this.datasetSpecification.series[0].seriesAxisValue)
+    this.remoteTileTextureManager = options.remoteTileTextureManager ?? new RemoteTileTextureManager();
   }
 
 
-    private getTexture(tileIndex: TileIndex, textureUrlPattern: string): Promise<Texture> {
+  /**
+   * Get the range of values along the series axis.
+   * It is assumed that the first element of the series has a smaller value
+   * than the last.
+   */
+  private getSerieAxisRange(): [number, number] | null {
+    const series = this.datasetSpecification.series;
+    if (!series.length) {
+      return null;
+    }
 
-      return new Promise((resolve, reject) => {
-        const tileIndexWrapped = wrapTileIndex(tileIndex);
-        const textureURL = this.tileUrlPrefix + textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
-          .replace("{y}", tileIndexWrapped.y.toString())
-          .replace("{z}", tileIndexWrapped.z.toString());
+    return [
+      series[0].seriesAxisValue,
+      series[series.length - 1].seriesAxisValue,
+    ];
+  }
 
-        if (this.unavailableTextures.has(textureURL)) {
-          return reject(new Error("Could not load texture."));
-        }
-  
-        if (this.texturePool.has(textureURL)) {
-          resolve(this.texturePool.get(textureURL) as Texture);
-        } else {
-          this.textureLoader.load(
-            textureURL,
-            
-            ( texture ) => {
-              texture.flipY = false;
-              this.texturePool.set(textureURL, texture);
-              resolve(texture);
-            },
-          
-            // onProgress callback currently not supported
-            undefined,
-          
-            // onError callback
-            ( err ) => {
-              this.unavailableTextures.add(textureURL);
-              reject(new Error("Could not load texture."))
-            }
-          );      
-        }
-      });
+
+  setSeriesAxisValue(pos: number) {
+    const range = this.getSerieAxisRange();
+    if (!range) {
+      return;
+    }
+    this.seriesAxisValue = clamp(range, pos);
+    this.defineCurrentSeriesElement();
+
+    if (this.map) {
+      this.map.triggerRepaint();
+    }
+  }
+
+  getSeriesAxisValue(): number {
+    return this.seriesAxisValue;
+  }
+
+
+  private defineCurrentSeriesElement() {
+    const series = this.datasetSpecification.series;
+    if (!series.length) {
+      return null;
+    }
+
+    if (series.length === 1) {
+      this.indexSeriesElementBefore = 0;
+      this.seriesElementBefore = series[0];
+      this.seriesElementAfter = series[0];
+      return;
+    }
+
+    const range = this.getSerieAxisRange();
+    if (!range) {
+      return;
+    }
+
+    if (this.seriesAxisValue <= range[0]) {
+      this.indexSeriesElementBefore = 0;
+      this.seriesElementBefore = series[0];
+      this.seriesElementAfter = series[0];
+      return;
+    }
+
+    if (this.seriesAxisValue >= range[1]) {
+      this.indexSeriesElementBefore = series.length - 1;
+      this.seriesElementBefore = series[series.length - 1];
+      this.seriesElementAfter = series[series.length - 1];
+      return;
+    }
+
+    for (let i = 0; i < series.length - 1; i += 1) {
+      const seriesI = series[i];
+      const seriesNext = series[i + 1];
+      
+      if (this.seriesAxisValue >= seriesI.seriesAxisValue && 
+          this.seriesAxisValue < seriesNext.seriesAxisValue) {
+            this.indexSeriesElementBefore = i;
+        this.seriesElementBefore = seriesI;
+        this.seriesElementAfter = seriesNext;
+        break;
+      }
+    }
+  }
+
+
+  /**
+   * Prefetch texture along the series dimensions for the same tile coverage as the curent.
+   * deltaBefore is the number of series elements before the curent position and deltaAfter
+   * is the number of elements after the curent position.
+   */
+  async prefetchSeriesTexture(deltaBefore: number, deltaAfter: number) {
+    // Tile indices {x, y, z} of the current tile coverage
+    const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
+    const series = this.datasetSpecification.series;
+    const fetchingPromiseList = [];
+
+    const seriesIndexStart = Math.max(0, this.indexSeriesElementBefore + deltaBefore);
+    const seriesIndexEnd = Math.min(series.length - 1, this.indexSeriesElementBefore + deltaAfter);
+
+    let counter = 0;
+
+    for (let i = seriesIndexStart; i < seriesIndexEnd + 1; i += 1) {
+      if (i < 0) continue;
+      if (i >= series.length) break;
+
+      for( const tileIndex of tileIndices) {
+        counter ++
+        fetchingPromiseList.push(
+          this.remoteTileTextureManager.getTexture(tileIndex, `${this.tileUrlPrefix}${series[i].tileUrlPattern}`)
+        );
+      }
     }
     
+    await Promise.allSettled(fetchingPromiseList);
+  }
 
-    /**
-     * Get the range of values along the series axis.
-     * It is assumed that the first element of the series has a smaller value
-     * than the last.
-     */
-    private getSerieAxisRange(): [number, number] | null {
-      const series = this.datasetSpecification.series;
-      if (!series.length) {
-        return null;
-      }
 
-      return [
-        series[0].seriesAxisValue,
-        series[series.length - 1].seriesAxisValue,
-      ];
+  /**
+   * Get the value and unit at a given position, for the current series axis position.
+   */
+  async pick(lngLat: LngLat): Promise<{value: number, unit: string | undefined} | null> {
+    const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
+
+    // Getting zoom level of current displayed tiles
+    const z = tileIndices[0].z;
+
+    const tileToPickUnstrict = wgs84ToTileIndex(lngLat, z, false);
+    const tileIndexStrict = {
+      z,
+      x: Math.floor(tileToPickUnstrict.x),
+      y: Math.floor(tileToPickUnstrict.y),
+    } as TileIndex;
+
+    const texturesBeforeAfter = await Promise.allSettled([
+      await this.remoteTileTextureManager.getTexture(tileIndexStrict,`${this.tileUrlPrefix}${this.seriesElementBefore.tileUrlPattern}`),
+      await this.remoteTileTextureManager.getTexture(tileIndexStrict,`${this.tileUrlPrefix}${this.seriesElementAfter.tileUrlPattern}`),
+    ])
+
+    if (texturesBeforeAfter[0].status === "rejected" || texturesBeforeAfter[1].status === "rejected") {
+      return null;
     }
 
+    const textureBefore = texturesBeforeAfter[0].value;
+    const textureAfter = texturesBeforeAfter[1].value;
 
-    setSeriesAxisValue(pos: number) {
-      const range = this.getSerieAxisRange();
-      if (!range) {
-        return;
-      }
-      this.seriesAxisValue = clamp(range, pos);
-      this.defineCurrentSeriesElement();
+    const textureUnitPosition = [
+      tileToPickUnstrict.x - tileIndexStrict.x,
+      tileToPickUnstrict.y - tileIndexStrict.y
+    ] as [number, number];
 
-      if (this.map) {
-        this.map.triggerRepaint();
-      }
+    const valuePixelBefore = pickImg(textureBefore.image, textureUnitPosition);
+    const valuePixelAfter = pickImg(textureAfter.image, textureUnitPosition);
+
+    if (!valuePixelBefore || !valuePixelAfter) return null;
+
+    const channels = Array.from(this.datasetSpecification.rasterEncoding.channels);
+    const valuePixelBeforeObj: Record<string, number> = {
+      r: valuePixelBefore[0],
+      g: valuePixelBefore[1],
+      b: valuePixelBefore[2],
+      a: valuePixelBefore[3],
+    };
+
+    const valuePixelAfterObj: Record<string, number> = {
+      r: valuePixelAfter[0],
+      g: valuePixelAfter[1],
+      b: valuePixelAfter[2],
+      a: valuePixelAfter[3],
+    };    
+    
+    // Nodata
+    if (valuePixelBeforeObj.a === 0 || valuePixelAfterObj.a === 0) {        
+      return null;
     }
 
-    getSeriesAxisValue(): number {
-      return this.seriesAxisValue;
+    let encodedValueBefore = 0;
+    let encodedValueAfter = 0;
+
+    if (channels.length === 1) {
+      encodedValueBefore = valuePixelBeforeObj[channels[0]];
+      encodedValueAfter = valuePixelAfterObj[channels[0]];
+    } else
+    
+    if (channels.length === 2) {
+      encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 + valuePixelBeforeObj[channels[1]];
+      encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 + valuePixelAfterObj[channels[1]];
+    } else
+    
+    if (channels.length === 3) {
+      encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 * 256 + valuePixelBeforeObj[channels[1]] * 256 + valuePixelBeforeObj[channels[2]];
+      encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 * 256 + valuePixelAfterObj[channels[1]] * 256 + valuePixelAfterObj[channels[2]];
+    } else {
+      return null;
     }
 
+    const {polynomialOffset, polynomialSlope} = this.datasetSpecification.rasterEncoding;
+    const realWorldValueBefore = encodedValueBefore * polynomialSlope + polynomialOffset;
+    const realWorldValueAfter = encodedValueAfter * polynomialSlope + polynomialOffset;
+    const ratioAfter = this.seriesElementAfter.seriesAxisValue === this.seriesElementBefore.seriesAxisValue ? realWorldValueBefore : (this.seriesAxisValue - this.seriesElementBefore.seriesAxisValue) / (this.seriesElementAfter.seriesAxisValue - this.seriesElementBefore.seriesAxisValue);
+    const realWorldValue = ratioAfter * realWorldValueAfter + (1 - ratioAfter) * realWorldValueBefore
 
-    private defineCurrentSeriesElement() {
-      const series = this.datasetSpecification.series;
-      if (!series.length) {
-        return null;
-      }
-
-      if (series.length === 1) {
-        this.indexSeriesElementBefore = 0;
-        this.seriesElementBefore = series[0];
-        this.seriesElementAfter = series[0];
-        return;
-      }
-
-      const range = this.getSerieAxisRange();
-      if (!range) {
-        return;
-      }
-
-      if (this.seriesAxisValue <= range[0]) {
-        this.indexSeriesElementBefore = 0;
-        this.seriesElementBefore = series[0];
-        this.seriesElementAfter = series[0];
-        return;
-      }
-
-      if (this.seriesAxisValue >= range[1]) {
-        this.indexSeriesElementBefore = series.length - 1;
-        this.seriesElementBefore = series[series.length - 1];
-        this.seriesElementAfter = series[series.length - 1];
-        return;
-      }
-
-      for (let i = 0; i < series.length - 1; i += 1) {
-        const seriesI = series[i];
-        const seriesNext = series[i + 1];
-        
-        if (this.seriesAxisValue >= seriesI.seriesAxisValue && 
-            this.seriesAxisValue < seriesNext.seriesAxisValue) {
-              this.indexSeriesElementBefore = i;
-          this.seriesElementBefore = seriesI;
-          this.seriesElementAfter = seriesNext;
-          break;
-        }
-      }
+    return {
+      value: realWorldValue,
+      unit: this.datasetSpecification.pixelUnit,
     }
-
-
-    /**
-     * Prefetch texture along the series dimensions for the same tile coverage as the curent.
-     * deltaBefore is the number of series elements before the curent position and deltaAfter
-     * is the number of elements after the curent position.
-     */
-    async prefetchSeriesTexture(deltaBefore: number, deltaAfter: number) {
-      // Tile indices {x, y, z} of the current tile coverage
-      const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
-      const series = this.datasetSpecification.series;
-      const fetchingPromiseList = [];
-
-      const seriesIndexStart = Math.max(0, this.indexSeriesElementBefore + deltaBefore);
-      const seriesIndexEnd = Math.min(series.length - 1, this.indexSeriesElementBefore + deltaAfter);
-
-      let counter = 0;
-
-      for (let i = seriesIndexStart; i < seriesIndexEnd + 1; i += 1) {
-        if (i < 0) continue;
-        if (i >= series.length) break;
-
-        for( const tileIndex of tileIndices) {
-          counter ++
-          fetchingPromiseList.push(
-            this.getTexture(tileIndex, series[i].tileUrlPattern)
-          );
-        }
-      }
-      
-      await Promise.allSettled(fetchingPromiseList);
-    }
-
-
-    /**
-     * Get the value and unit at a given position, for the current series axis position.
-     */
-    async pick(lngLat: LngLat): Promise<{value: number, unit: string | undefined} | null> {
-      const tileIndices = Array.from(this.usedTileMap.values()).map(tile => tile.getTileIndex());
-
-      // Getting zoom level of current displayed tiles
-      const z = tileIndices[0].z;
-
-      const tileToPickUnstrict = wgs84ToTileIndex(lngLat, z, false);
-      const tileIndexStrict = {
-        z,
-        x: Math.floor(tileToPickUnstrict.x),
-        y: Math.floor(tileToPickUnstrict.y),
-      } as TileIndex;
-
-      const texturesBeforeAfter = await Promise.allSettled([
-        await this.getTexture(tileIndexStrict, this.seriesElementBefore.tileUrlPattern),
-        await this.getTexture(tileIndexStrict, this.seriesElementAfter.tileUrlPattern),
-      ])
-
-      if (texturesBeforeAfter[0].status === "rejected" || texturesBeforeAfter[1].status === "rejected") {
-        return null;
-      }
-
-      const textureBefore = texturesBeforeAfter[0].value;
-      const textureAfter = texturesBeforeAfter[1].value;
-
-      const textureUnitPosition = [
-        tileToPickUnstrict.x - tileIndexStrict.x,
-        tileToPickUnstrict.y - tileIndexStrict.y
-      ] as [number, number];
-
-      const valuePixelBefore = pickImg(textureBefore.image, textureUnitPosition);
-      const valuePixelAfter = pickImg(textureAfter.image, textureUnitPosition);
-
-      if (!valuePixelBefore || !valuePixelAfter) return null;
-
-      const channels = Array.from(this.datasetSpecification.rasterEncoding.channels);
-      const valuePixelBeforeObj: Record<string, number> = {
-        r: valuePixelBefore[0],
-        g: valuePixelBefore[1],
-        b: valuePixelBefore[2],
-        a: valuePixelBefore[3],
-      };
-
-      const valuePixelAfterObj: Record<string, number> = {
-        r: valuePixelAfter[0],
-        g: valuePixelAfter[1],
-        b: valuePixelAfter[2],
-        a: valuePixelAfter[3],
-      };    
-      
-      // Nodata
-      if (valuePixelBeforeObj.a === 0 || valuePixelAfterObj.a === 0) {        
-        return null;
-      }
-
-      let encodedValueBefore = 0;
-      let encodedValueAfter = 0;
-
-      if (channels.length === 1) {
-        encodedValueBefore = valuePixelBeforeObj[channels[0]];
-        encodedValueAfter = valuePixelAfterObj[channels[0]];
-      } else
-      
-      if (channels.length === 2) {
-        encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 + valuePixelBeforeObj[channels[1]];
-        encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 + valuePixelAfterObj[channels[1]];
-      } else
-      
-      if (channels.length === 3) {
-        encodedValueBefore = valuePixelBeforeObj[channels[0]] * 256 * 256 + valuePixelBeforeObj[channels[1]] * 256 + valuePixelBeforeObj[channels[2]];
-        encodedValueAfter = valuePixelAfterObj[channels[0]] * 256 * 256 + valuePixelAfterObj[channels[1]] * 256 + valuePixelAfterObj[channels[2]];
-      } else {
-        return null;
-      }
-
-      const {polynomialOffset, polynomialSlope} = this.datasetSpecification.rasterEncoding;
-      const realWorldValueBefore = encodedValueBefore * polynomialSlope + polynomialOffset;
-      const realWorldValueAfter = encodedValueAfter * polynomialSlope + polynomialOffset;
-      const ratioAfter = this.seriesElementAfter.seriesAxisValue === this.seriesElementBefore.seriesAxisValue ? realWorldValueBefore : (this.seriesAxisValue - this.seriesElementBefore.seriesAxisValue) / (this.seriesElementAfter.seriesAxisValue - this.seriesElementBefore.seriesAxisValue);
-      const realWorldValue = ratioAfter * realWorldValueAfter + (1 - ratioAfter) * realWorldValueBefore
-
-      return {
-        value: realWorldValue,
-        unit: this.datasetSpecification.pixelUnit,
-      }
-    }
+  }
 
 
 }
