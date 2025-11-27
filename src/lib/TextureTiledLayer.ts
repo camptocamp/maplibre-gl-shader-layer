@@ -4,25 +4,24 @@
  */
 
 import QuickLRU from "quick-lru";
-import { DoubleSide, type Texture, TextureLoader, RawShaderMaterial, GLSL3, Uniform, Vector4, Vector3, BackSide } from "three";
-import { type Mat4, ShaderTiledLayer } from "./ShaderTiledLayer";
+import { type Texture, TextureLoader, RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
+import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
 import { wrapTileIndex, type TileIndex } from "./tools";
 import type { Tile } from "./Tile";
 // @ts-ignore
-import vertexShader from "./shaders/texture-tile.v.glsl?raw";
+import vertexShader from "./shaders/globe-tile.v.glsl?raw";
 // @ts-ignore
 import fragmentShader from "./shaders/texture-tile.f.glsl?raw";
 
 export type TextureTiledLayerOptions = {
-  minZoom?: number,
-  maxZoom?: number,
-  textureUrlPattern: string,
-}
+  minZoom?: number;
+  maxZoom?: number;
+  textureUrlPattern: string;
+};
 
-
-export class TextureTiledLayer extends ShaderTiledLayer {
-  private textureUrlPattern: string;
-  private texturePool: QuickLRU<string, Texture> = new QuickLRU({
+export class TextureTiledLayer extends BaseShaderTiledLayer {
+  private readonly textureUrlPattern: string;
+  private readonly texturePool: QuickLRU<string, Texture> = new QuickLRU({
     // should be replaced by gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     maxSize: 100,
 
@@ -30,17 +29,11 @@ export class TextureTiledLayer extends ShaderTiledLayer {
       console.log("freeing texture GPU memory");
       value.dispose();
     },
-  }); 
-
-  // Set to store the "z_x_y" of textures that cannot be loaded, so that we don't
-  // try to load them again and again
-  private nonExistingTextures: Set<string> = new Set();
+  });
 
   constructor(id: string, options: TextureTiledLayerOptions) {
-
-
     super(id, {
-      minZoom: options.minZoom ?? 0, 
+      minZoom: options.minZoom ?? 0,
       maxZoom: options.maxZoom ?? 22,
 
       onSetTileMaterial: (tileIndex: TileIndex) => {
@@ -56,73 +49,71 @@ export class TextureTiledLayer extends ShaderTiledLayer {
             tex: { value: texture },
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
-            isGlobe: { value: (mapProjection && mapProjection.type === "globe")},
+            isGlobe: { value: mapProjection && mapProjection.type === "globe" },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
           side: BackSide,
-					transparent: true,
+          transparent: true,
           depthTest: false,
           // wireframe: true,
-        })
+        });
 
         return material;
       },
 
-
-      onTileUpdate: (tile: Tile, matrix: Mat4) => {
+      onTileUpdate: (tile: Tile, _matrix: Mat4) => {
         const mapProjection = this.map.getProjection();
         const tileIndeArray = tile.getTileIndexAsArray();
         const mat = tile.material as RawShaderMaterial;
         const zoom = this.map.getZoom();
         // At z12+, the globe is no longer globe in Maplibre
-        const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
+        const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
 
         mat.uniforms.tex.value = this.getTexture(tile.getTileIndex());
         mat.uniforms.zoom.value = zoom;
         mat.uniforms.isGlobe.value = isGlobe;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
-      }
+      },
     });
 
     this.textureUrlPattern = options.textureUrlPattern;
   }
 
-
   private getTexture(tileIndex: TileIndex): Texture {
-      const tileIndexWrapped = wrapTileIndex(tileIndex);
-      const textureId = `${tileIndexWrapped.z}_${tileIndexWrapped.x}_${tileIndexWrapped.y}`;
-    
-      let texture: Texture;
-      
-      if (this.texturePool.has(textureId)) {
-        texture = this.texturePool.get(textureId) as Texture;
-      } else {
-        const textureURL = this.textureUrlPattern.replace("{x}", tileIndexWrapped.x.toString())
-          .replace("{y}", tileIndexWrapped.y.toString())
-          .replace("{z}", tileIndexWrapped.z.toString());
-  
-        // texture = this.textureLoader.load(
-        texture = new TextureLoader().load(
-          textureURL,
-          
-          ( texture ) => {
-            // console.log("SUCESS");
-          },
-        
-          // onProgress callback currently not supported
-          undefined,
-        
-          // onError callback
-          ( err ) => {
-            console.error( 'An error happened.' );
-          }
-        );      
-      }
-      texture.flipY = false;
-      this.texturePool.set(textureId, texture);
-  
-      return texture;
-    }
+    const tileIndexWrapped = wrapTileIndex(tileIndex);
+    const textureId = `${tileIndexWrapped.z}_${tileIndexWrapped.x}_${tileIndexWrapped.y}`;
 
+    let texture: Texture;
+
+    if (this.texturePool.has(textureId)) {
+      texture = this.texturePool.get(textureId) as Texture;
+    } else {
+      const textureURL = this.textureUrlPattern
+        .replace("{x}", tileIndexWrapped.x.toString())
+        .replace("{y}", tileIndexWrapped.y.toString())
+        .replace("{z}", tileIndexWrapped.z.toString());
+
+      // texture = this.textureLoader.load(
+      texture = new TextureLoader().load(
+        textureURL,
+
+        (_texture) => {
+          // console.log("SUCESS");
+        },
+
+        // onProgress callback currently not supported
+        undefined,
+
+        // onError callback
+        (_err) => {
+          console.error("An error happened.");
+        },
+      );
+    }
+    texture.flipY = false;
+    this.texturePool.set(textureId, texture);
+
+    return texture;
+  }
 }

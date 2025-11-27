@@ -1,5 +1,5 @@
 import { CanvasTexture } from "three";
-import Color, { type ColorLike } from 'color';
+import Color, { type ColorLike } from "color";
 
 export type ColormapDescription = (number | ColorLike)[];
 type RgbaArray = [number, number, number, number];
@@ -22,7 +22,7 @@ type ColormapImageCreationOption = {
   /**
    * Whether the colormap is rendered as gradient (true) or as classes (false)
    */
-  gradient?: boolean,
+  gradient?: boolean;
 };
 
 export class Colormap {
@@ -39,9 +39,9 @@ export class Colormap {
     this.minValue = colormapDescription[0] as number;
     this.maxValue = colormapDescription.at(-2) as number;
     this.keyPointValues = colormapDescription.filter((_, i) => i % 2 === 0) as number[];
-    this.rgbColors = (colormapDescription.filter((_, i) => i % 2 === 1) as string[]).map(
-      (hexColor) => Colormap.colorToRgba(hexColor),
-    );    
+    this.rgbColors = (colormapDescription.filter((_, i) => i % 2 === 1) as string[]).map((hexColor) =>
+      Colormap.colorToRgba(hexColor),
+    );
   }
 
   getRgbColorAt(value: number, gradient = true): RgbaArray {
@@ -91,14 +91,14 @@ export class Colormap {
    */
   createCanvasElement(options: ColormapImageCreationOption = {}): HTMLCanvasElement {
     const size = options.size ?? 250;
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     const horizontal = options.horizontal ?? true;
     const gradient = options.gradient ?? true;
     canvas.width = horizontal ? size : 1;
     canvas.height = horizontal ? 1 : size;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
 
-    if (!ctx) throw new Error('Canvas context is missing');
+    if (!ctx) throw new Error("Canvas context is missing");
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const imageDataArray = imageData.data;
@@ -127,9 +127,9 @@ export class Colormap {
         if (blob) {
           resolve(blob);
         } else {
-          reject(new Error('The blob cound not be generated out of the canvas.'));
+          reject(new Error("The blob cound not be generated out of the canvas."));
         }
-      }, 'image/png');
+      }, "image/png");
     });
   }
 
@@ -157,7 +157,7 @@ export class Colormap {
     const round = options.round ?? true;
 
     if (numberOfLabels < 2) {
-      throw new Error('At least 2 labels.');
+      throw new Error("At least 2 labels.");
     }
 
     let labels = [this.minValue, this.maxValue];
@@ -183,11 +183,11 @@ export class Colormap {
   /**
    * Returns the range on which is defined the colormap
    */
-  getRange(): {min: number, max: number} {
+  getRange(): { min: number; max: number } {
     return {
       min: this.minValue,
       max: this.maxValue,
-    }
+    };
   }
 
   /**
@@ -198,16 +198,12 @@ export class Colormap {
     return new CanvasTexture(canvasEl);
   }
 
-
   /**
    * Splits the colormap description in two arrays: an array with only the keyPointValues,
    * and another one with only colors
    */
   static split(colormapDescription: ColormapDescription): [unknown[], unknown[]] {
-    return [
-      colormapDescription.filter((_, i) => i % 2 === 0),
-      colormapDescription.filter((_, i) => i % 2 === 1),
-    ];
+    return [colormapDescription.filter((_, i) => i % 2 === 0), colormapDescription.filter((_, i) => i % 2 === 1)];
   }
 
   /**
@@ -230,10 +226,7 @@ export class Colormap {
     }
 
     const [keyPointValues, colors] = Colormap.split(colormapDescription);
-    const allKeyPointValuesAreNumbers = keyPointValues.every(
-      (val) => typeof val === 'number',
-    );
-
+    const allKeyPointValuesAreNumbers = keyPointValues.every((val) => typeof val === "number");
 
     const allColorsAreHex = colors.every((val) => Colormap.isColorValid(val));
 
@@ -245,29 +238,28 @@ export class Colormap {
     return allKeyPointValuesAreNumbers && allColorsAreHex;
   }
 
-
   /**
    * Factory function that performs some verification before instantiating a Colormap
    * (the Colormap constructor is private)
    */
-  static fromColormapDescription(colormapDescription: ColormapDescription, scaling?: {min: number, max: number, reverse?: boolean}): Colormap {
+  static fromColormapDescription(
+    colormapDescription: ColormapDescription,
+    scaling?: { min: number; max: number; reverse?: boolean },
+  ): Colormap {
     const isValid = Colormap.isColormapDescriptionValid(colormapDescription);
 
     if (!isValid) {
-      throw new Error('The provided colormap description is invalid');
+      throw new Error("The provided colormap description is invalid");
     }
 
     const pairs: Array<[number, string]> = [];
     for (let i = 0; i < colormapDescription.length; i += 2) {
-      pairs.push([
-        colormapDescription[i] as number,
-        colormapDescription[i + 1] as string,
-      ]);
+      pairs.push([colormapDescription[i] as number, colormapDescription[i + 1] as string]);
     }
     pairs.sort((a, b) => a[0] - b[0]);
 
     if (scaling) {
-      if(scaling.min > scaling.max) {
+      if (scaling.min > scaling.max) {
         throw new Error("Colormap scaling min must be greater than max.");
       }
 
@@ -282,17 +274,17 @@ export class Colormap {
         for (let i = 0; i < pairs.length; i += 1) {
           const pair = pairs[i];
           const pairClone = pairsClone[pairsClone.length - 1 - i];
-          pair[0] = (((pair[0] - currentMin) / currentSpan) * targetSpan) + scaling.min;
+          pair[0] = ((pair[0] - currentMin) / currentSpan) * targetSpan + scaling.min;
           pair[1] = pairClone[1];
         }
       } else {
         for (const pair of pairs) {
-          pair[0] = (((pair[0] - currentMin) / currentSpan) * targetSpan) + scaling.min;
+          pair[0] = ((pair[0] - currentMin) / currentSpan) * targetSpan + scaling.min;
         }
       }
     }
 
-    const ordered = pairs.flat();    
+    const ordered = pairs.flat();
     return new Colormap(ordered);
   }
 
@@ -303,7 +295,7 @@ export class Colormap {
     try {
       Color(color as ColorLike);
       return true;
-    } catch(e) {
+    } catch (e) {
       return false;
     }
   }
@@ -320,9 +312,8 @@ export class Colormap {
         Math.floor(colorObj.blue()),
         Math.floor(colorObj.alpha() * 255),
       ];
-    } catch(e) {
+    } catch (e) {
       return TRANSPARENT_BLACK;
     }
   }
-
 }

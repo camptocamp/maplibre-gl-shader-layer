@@ -3,15 +3,19 @@ import {
   Camera,
   Matrix4,
   type MeshBasicMaterial,
-  Object3D,
   PlaneGeometry,
   Scene,
   WebGLRenderer,
   type RawShaderMaterial,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport, wrapTileIndex } from "./tools";
+import {
+  type TileIndex,
+  getTileBoundsUnwrapped,
+  tileBoundsUnwrappedToTileList,
+  isTileInViewport,
+  wrapTileIndex,
+} from "./tools";
 import { Tile } from "./Tile";
-
 
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
@@ -53,7 +57,7 @@ type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
  */
 type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void | Promise<void>;
 
-export type ShaderTiledLayerOptions = {
+export type BaseShaderTiledLayerOptions = {
   /**
    * Default: 0
    */
@@ -93,10 +97,10 @@ export type ShaderTiledLayerOptions = {
   /**
    * Opacity of the layer
    */
-  opacity?: number,
+  opacity?: number;
 };
 
-export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
+export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   public id: string;
   public readonly type = "custom";
   public renderingMode: "2d" | "3d" = "3d";
@@ -120,7 +124,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   private tileZoomFittingFunction: (v: number) => number = Math.floor;
   protected opacity = 1;
 
-  constructor(id: string, options: ShaderTiledLayerOptions) {
+  constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;
     this.initScene();
     this.minZoom = options.minZoom ?? 0;
@@ -140,16 +144,12 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     }
   }
 
-
   protected initScene() {
     this.camera = new Camera();
     this.scene = new Scene();
-    // this.tileContainer = new Object3D();
-    // this.scene.add(this.tileContainer);
     this.tileGeometry = new PlaneGeometry(1, 1, 32, 32);
   }
 
-  
   /**
    * Compute the correct zoom level based on the map zoom level and the provided options.
    * The returned value is an integer.
@@ -183,7 +183,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected listTilesIndicesForMapBounds() {
     const mapProjection = this.map.getProjection();
     const zoom = this.map.getZoom();
-    const isGlobe = (mapProjection && mapProjection.type === "globe") && zoom < 12;
+    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
 
     const z = this.getAppropriateZoomLevel();
     const tbu = getTileBoundsUnwrapped(this.map, z);
@@ -195,25 +195,25 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
       const tileMap = new Map<string, TileIndex>();
       for (const tile of tileIndicesCandidates) {
         const wrappedTile = wrapTileIndex(tile);
-        tileMap.set(`${wrappedTile.x}_${wrappedTile.y}_${wrappedTile.z}`, wrappedTile)
+        tileMap.set(`${wrappedTile.x}_${wrappedTile.y}_${wrappedTile.z}`, wrappedTile);
       }
 
       tileIndicesCandidates = Array.from(tileMap.values());
     }
-    
+
     if (this.map.getZoom() >= z) {
-      return tileIndicesCandidates
+      return tileIndicesCandidates;
     }
 
     const canvas = this.map.getCanvas();
     const canvasWidth = canvas.clientWidth;
     const canvasHeight = canvas.clientHeight;
-    const tileIndicesFiltered = tileIndicesCandidates
-      .filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight))
-      
+    const tileIndicesFiltered = tileIndicesCandidates.filter((ti) =>
+      isTileInViewport(ti, this.map, canvasWidth, canvasHeight),
+    );
+
     return tileIndicesFiltered;
   }
-
 
   onRemove(_map: maplibregl.Map, _gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     console.warn("not implemented yet");
@@ -227,7 +227,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
     // Brute force flush the tile container (Object3D) and refill it with tiles from the pool
     // this.tileContainer.clear();
-    this.scene.clear()
+    this.scene.clear();
     const allTileIndices = this.listTilesIndicesForMapBounds();
     const tilesToAdd = [];
     const usedTileMapPrevious = this.usedTileMap;
@@ -273,7 +273,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
       usedTileMapNew.set(tileID, tile);
       tile.setTileIndex(tileIndex);
       this.scene.add(tile);
-      
+
       if (this.onTileUpdate) {
         this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
       }

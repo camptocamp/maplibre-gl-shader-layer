@@ -9,12 +9,7 @@ uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
 uniform float date;
 uniform float zoom;
-
 uniform vec3 tileIndex;
-
-uniform float days;
-uniform float sunCoordDec;
-uniform float sunCoordRa;
 
 in vec2 vPositionUnit;
 in vec2 vLonLat;
@@ -108,30 +103,6 @@ vec2 getSunPosition(vec2 lonLat, float timestamp) {
 }
 
 
-
-
-vec2 getSunPosition_2(vec2 lonLat) {
-    float lng = lonLat.x;
-    float lat = lonLat.y;
-    
-    float lw = RAD * -lng;
-    float phi = RAD * lat;
-    float d = days;
-    
-    float dec = sunCoordDec;
-    float ra = sunCoordRa;
-    
-    float H = siderealTime(d, lw) - ra;
-    
-    return vec2(
-        azimuth(H, phi, dec),
-        altitude(H, phi, dec)
-    );
-}
-
-
-
-
 vec2 tileToLonLat(vec3 tileIndex, vec2 positionUnit) {
     highp float zoom = tileIndex.z;
     highp float tileX = tileIndex.x;
@@ -174,7 +145,7 @@ void main()  {
   // vec2 sunPos = getSunPosition(vLonLat, date);
   highp vec2 lonLat = tileToLonLat(tileIndex, vPositionUnit);
 
-  vec2 sunPos = getSunPosition_2(lonLat);
+  vec2 sunPos = getSunPosition(lonLat, date);
 
 
   float sunAzimuth = sunPos.x;   // in radians

@@ -3,13 +3,15 @@ import "./style.css";
 import maplibregl, { type MapMouseEvent } from "maplibre-gl";
 import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
-import { MultiChannelTiledLayer } from "./MultiChannelTiledLayer";
-import { Colormap } from "./colormap";
-import { MultiChannelSeriesTiledLayer, type MultiChannelSeriesTiledLayerSpecification } from "./MultiChannelSeriesTiledLayer";
-import { DaylightLayer } from "./DaylightLayer"
-import * as colormapCollection from "./colormap-collection";
+import { Colormap } from "./lib/colormap";
+import {
+  MultiChannelSeriesTiledLayer,
+  type MultiChannelSeriesTiledLayerSpecification,
+} from "./lib/MultiChannelSeriesTiledLayer";
+import { DaylightLayer } from "./lib/DaylightLayer";
+import * as colormapCollection from "./lib/colormap-collection";
 
-
+/*
 async function initMono() {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
@@ -95,28 +97,23 @@ async function initMono() {
   })
 
 }
-
-
+*/
 
 const seriesConfig = {
   temperature_2m: {
-    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, {min: -25, max: 40, reverse: false}),
+    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, { min: -25, max: 40, reverse: false }),
     style: "spectre-purple",
     swapWaterEarth: false,
     placelayerBeforeId: "water",
-    layerOpacity: [
-      {layerId: "water", opacity: 0.2},
-    ]
+    layerOpacity: [{ layerId: "water", opacity: 0.2 }],
   },
 
   wind_speed_10m: {
-    colormap: Colormap.fromColormapDescription(colormapCollection.bathymetry, {min: 0, max: 22}),
+    colormap: Colormap.fromColormapDescription(colormapCollection.bathymetry, { min: 0, max: 22 }),
     style: "spectre-negative",
     swapWaterEarth: true,
     placelayerBeforeId: "earth",
-    layerOpacity: [
-      {layerId: "earth", opacity: 0.3},
-    ]
+    layerOpacity: [{ layerId: "earth", opacity: 0.3 }],
   },
 
   presure_msl: {
@@ -151,23 +148,14 @@ const seriesConfig = {
   //   ]
   // }
 
-
   index: {
-    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, {min: -15, max: 25, reverse: false}),
+    colormap: Colormap.fromColormapDescription(colormapCollection.turbo, { min: -15, max: 25, reverse: false }),
     style: "spectre-purple",
     swapWaterEarth: false,
     placelayerBeforeId: "water",
-    layerOpacity: [
-      {layerId: "water", opacity: 0.1},
-    ]
+    layerOpacity: [{ layerId: "water", opacity: 0.1 }],
   },
 } as const;
-
-
-
-
-
-
 
 type WeatherVariableId = keyof typeof seriesConfig;
 
@@ -182,7 +170,6 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
   const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
   if (!opacitySlider) throw new Error("Slider not working");
-  
 
   const pickindDisplay = document.getElementById("picking-display");
   if (!pickindDisplay) throw new Error("Picking display not working");
@@ -190,22 +177,21 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  const tileUrlPrefix = "http://127.0.0.1:8083/"
+  const tileUrlPrefix = "http://127.0.0.1:8083/";
   const seriesInfoUrl = `${tileUrlPrefix}${weatherVariableId}.json`;
   const seriesInfoResponse = await fetch(seriesInfoUrl);
-  const seriesInfo = await seriesInfoResponse.json() as MultiChannelSeriesTiledLayerSpecification;
+  const seriesInfo = (await seriesInfoResponse.json()) as MultiChannelSeriesTiledLayerSpecification;
 
   console.log(seriesInfo);
 
-  seriesSlider.min = seriesInfo.series[0].seriesAxisValue.toString()
-  seriesSlider.max = seriesInfo.series[seriesInfo.series.length - 1].seriesAxisValue.toString()
+  seriesSlider.min = seriesInfo.series[0].seriesAxisValue.toString();
+  seriesSlider.max = seriesInfo.series[seriesInfo.series.length - 1].seriesAxisValue.toString();
 
   const lang = "en";
   const pmtiles = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/planet.pmtiles";
-  const sprite = "https://raw.githubusercontent.com/jonathanlurie/phosphor-mlgl-sprite/refs/heads/main/sprite/phosphor-diecut";
+  const sprite =
+    "https://raw.githubusercontent.com/jonathanlurie/phosphor-mlgl-sprite/refs/heads/main/sprite/phosphor-diecut";
   const glyphs = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf";
-  const pmtilesTerrain = "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles";
-  const terrainTileEncoding = "terrarium";
 
   let style = getStyle(seriesConfig[weatherVariableId].style, {
     pmtiles,
@@ -216,15 +202,17 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
     // globe: false,
     // terrain: {
-    //   pmtiles: pmtilesTerrain,
+    //   pmtiles: "https://fsn1.your-objectstorage.com/public-map-data/pmtiles/terrain-mapterhorn.pmtiles",
     //   encoding: "terrarium"
     // }
   });
 
-
   if ("layerOpacity" in seriesConfig[weatherVariableId]) {
-    for (const opacityInstruction of seriesConfig[weatherVariableId].layerOpacity) {
-      style = setLayerOpacity(opacityInstruction.layerId , opacityInstruction.opacity, style);
+    for (const opacityInstruction of seriesConfig[weatherVariableId].layerOpacity as Array<{
+      layerId: string;
+      opacity: number;
+    }>) {
+      style = setLayerOpacity(opacityInstruction.layerId, opacityInstruction.opacity, style);
     }
   }
 
@@ -232,19 +220,17 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
     style = swapLayers("earth", "water", style);
   }
 
-  // Webgl layer not working well with Basemakit definition of globe 
+  // Webgl layer not working well with Basemakit definition of globe
   // style.projection = {type: "mercator"};
 
   console.log(style);
-  
 
-  const map = new maplibregl.Map({ 
-    container, 
-    hash: true, 
+  const map = new maplibregl.Map({
+    container,
+    hash: true,
     style: style,
     maxPitch: 89,
   });
-
 
   console.log(map);
 
@@ -252,13 +238,11 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
 
   await new Promise((resolve) => map.on("load", resolve));
 
-
   console.log("LOAD");
 
-  const daylightLayer = new DaylightLayer("daylight")
-  map.addLayer(daylightLayer, "earth_line")
+  const daylightLayer = new DaylightLayer("daylight");
+  map.addLayer(daylightLayer, "earth_line");
 
-  
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
     datasetSpecification: seriesInfo,
     colormap: seriesConfig[weatherVariableId].colormap,
@@ -267,57 +251,53 @@ async function initSeries(weatherVariableId: WeatherVariableId) {
   });
 
   console.log("layer", layer);
-  
 
   if (seriesConfig[weatherVariableId].placelayerBeforeId) {
     map.addLayer(layer, seriesConfig[weatherVariableId].placelayerBeforeId);
   } else {
     map.addLayer(layer);
   }
-  
+
   seriesSlider.addEventListener("input", () => {
     const sliderTimestamp = Number.parseFloat(seriesSlider.value);
     layer.setSeriesAxisValue(sliderTimestamp);
 
     // We could take the one from the slider, but the layer add a safety clapming
-    const seriesAxisValue =  layer.getSeriesAxisValue();
+    const seriesAxisValue = layer.getSeriesAxisValue();
     const sliderDate = new Date(seriesAxisValue * 1000);
 
-    const dateStr = new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'full',
-      timeStyle: 'short'
-    }).format(sliderDate)
+    const dateStr = new Intl.DateTimeFormat("en-US", {
+      dateStyle: "full",
+      timeStyle: "short",
+    }).format(sliderDate);
 
     daylightLayer.setDate(sliderDate);
 
     dateDisplay.innerText = dateStr;
-  })
+  });
 
-  seriesSlider.addEventListener("pointerenter", () => {      
+  seriesSlider.addEventListener("pointerenter", () => {
     layer.prefetchSeriesTexture(-15, 15);
-  })
+  });
 
   opacitySlider.addEventListener("input", () => {
-    layer.setOpacity(Number.parseFloat(opacitySlider.value))
-  })
+    layer.setOpacity(Number.parseFloat(opacitySlider.value));
+  });
 
-  map.on("mousemove", async (e: MapMouseEvent) => {    
-    try{
-      const pickingInfo = await layer.pick(e.lngLat)
+  map.on("mousemove", async (e: MapMouseEvent) => {
+    try {
+      const pickingInfo = await layer.pick(e.lngLat);
       if (pickingInfo) {
         pickindDisplay.innerText = `${pickingInfo?.value.toFixed(2)}${pickingInfo?.unit}`;
       } else {
-        pickindDisplay.innerText = "[no data]" 
+        pickindDisplay.innerText = "[no data]";
       }
-    } catch(err) {
+    } catch (err) {
       console.log(err);
-      
-      pickindDisplay.innerText = "-"      
+
+      pickindDisplay.innerText = "-";
     }
-  })
-
-  
-
+  });
 }
 
 initSeries("temperature_2m");
