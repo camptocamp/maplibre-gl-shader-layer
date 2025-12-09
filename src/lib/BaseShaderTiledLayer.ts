@@ -3,15 +3,19 @@ import {
   Camera,
   Matrix4,
   type MeshBasicMaterial,
-  Object3D,
   PlaneGeometry,
   Scene,
   WebGLRenderer,
   type RawShaderMaterial,
 } from "three";
-import { type TileIndex, getTileBoundsUnwrapped, tileBoundsUnwrappedToTileList, isTileInViewport, tileBoundsUnwrappedToTileList2 } from "./tools";
+import {
+  type TileIndex,
+  getTileBoundsUnwrapped,
+  tileBoundsUnwrappedToTileList,
+  isTileInViewport,
+  wrapTileIndex,
+} from "./tools";
 import { Tile } from "./Tile";
-
 
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
@@ -51,9 +55,9 @@ type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
  * Function to update the material of a tile Mesh.
  * The matrix is the one matrix provided by MapLibre
  */
-type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void;
+type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void | Promise<void>;
 
-export type ShaderTiledLayerOptions = {
+export type BaseShaderTiledLayerOptions = {
   /**
    * Default: 0
    */
@@ -89,9 +93,14 @@ export type ShaderTiledLayerOptions = {
   onTileUpdate?: UpdateTileMaterialFunction;
 
   tileZoomFitting?: TileZoomFitting;
+
+  /**
+   * Opacity of the layer
+   */
+  opacity?: number;
 };
 
-export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
+export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   public id: string;
   public readonly type = "custom";
   public renderingMode: "2d" | "3d" = "3d";
@@ -113,8 +122,9 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected onSetTileMaterial: SetTileMaterialFunction;
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.floor;
+  protected opacity = 1;
 
-  constructor(id: string, options: ShaderTiledLayerOptions) {
+  constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;
     this.initScene();
     this.minZoom = options.minZoom ?? 0;
@@ -123,6 +133,7 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     this.showBeyondMaxZoom = options.showBeyondMaxZoom ?? true;
     this.onSetTileMaterial = options.onSetTileMaterial;
     this.onTileUpdate = options.onTileUpdate ?? null;
+    this.opacity = Math.max(0, Math.min(options.opacity ?? 1, 1));
 
     if (options && options.tileZoomFitting) {
       if (options.tileZoomFitting === "CEIL") {
@@ -133,16 +144,12 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     }
   }
 
-
   protected initScene() {
     this.camera = new Camera();
     this.scene = new Scene();
-    // this.tileContainer = new Object3D();
-    // this.scene.add(this.tileContainer);
     this.tileGeometry = new PlaneGeometry(1, 1, 32, 32);
   }
 
-  
   /**
    * Compute the correct zoom level based on the map zoom level and the provided options.
    * The returned value is an integer.
@@ -174,13 +181,26 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
   }
 
   protected listTilesIndicesForMapBounds() {
+    const mapProjection = this.map.getProjection();
+    const zoom = this.map.getZoom();
+    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
+
     const z = this.getAppropriateZoomLevel();
     const tbu = getTileBoundsUnwrapped(this.map, z);
     // The candidates are strictly based on axis-align bounding box, so when map is pitched and rotated,
     // the list of candidates needs to be pruned from all the tiles that are not in viewport
-    const tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
-    // const tileIndicesCandidates = tileBoundsUnwrappedToTileList2(this.map);
-    
+    let tileIndicesCandidates = tileBoundsUnwrappedToTileList(tbu);
+
+    if (isGlobe) {
+      const tileMap = new Map<string, TileIndex>();
+      for (const tile of tileIndicesCandidates) {
+        const wrappedTile = wrapTileIndex(tile);
+        tileMap.set(`${wrappedTile.x}_${wrappedTile.y}_${wrappedTile.z}`, wrappedTile);
+      }
+
+      tileIndicesCandidates = Array.from(tileMap.values());
+    }
+
     if (this.map.getZoom() >= z) {
       return tileIndicesCandidates;
     }
@@ -188,21 +208,18 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
     const canvas = this.map.getCanvas();
     const canvasWidth = canvas.clientWidth;
     const canvasHeight = canvas.clientHeight;
-    const tileIndicesFiltered = tileIndicesCandidates.filter(ti => isTileInViewport(ti, this.map, canvasWidth, canvasHeight));    
+    const tileIndicesFiltered = tileIndicesCandidates.filter((ti) =>
+      isTileInViewport(ti, this.map, canvasWidth, canvasHeight),
+    );
+
     return tileIndicesFiltered;
   }
-
 
   onRemove(_map: maplibregl.Map, _gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     console.warn("not implemented yet");
   }
 
-  prerender(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
-
-    // console.log("options", options);
-    
-    // console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
-    
+  render(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
     this.shouldShowCurrent = this.shouldShow();
 
     // Escape if not rendering
@@ -210,18 +227,14 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
     // Brute force flush the tile container (Object3D) and refill it with tiles from the pool
     // this.tileContainer.clear();
-    this.scene.clear()
+    this.scene.clear();
     const allTileIndices = this.listTilesIndicesForMapBounds();
-    // console.log(allTileIndices);
-
-
     const tilesToAdd = [];
     const usedTileMapPrevious = this.usedTileMap;
     const usedTileMapNew = new Map<string, Tile>();
 
-
-    for (let i = 0; i < allTileIndices.length; i += 1) {
-      const tileIndex = allTileIndices[i];
+    for (const element of allTileIndices) {
+      const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       const tile = usedTileMapPrevious.get(tileID);
@@ -231,13 +244,10 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
         // Removing it from the previous map so that only remains the unused ones
         usedTileMapPrevious.delete(tileID);
-
-        // this.tileContainer.add(tile);
         this.scene.add(tile);
 
         if (this.onTileUpdate) {
-          // console.log("keep");
-          this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix);
+          this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
         }
       } else {
         // This tile is not in the pool
@@ -247,8 +257,8 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
     this.unusedTileList.push(...Array.from(usedTileMapPrevious.values()));
 
-    for (let i = 0; i < tilesToAdd.length; i += 1) {
-      const tileIndex = tilesToAdd[i];
+    for (const element of tilesToAdd) {
+      const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       let tile: Tile;
@@ -263,50 +273,24 @@ export class ShaderTiledLayer implements maplibregl.CustomLayerInterface {
       usedTileMapNew.set(tileID, tile);
       tile.setTileIndex(tileIndex);
       this.scene.add(tile);
-      
+
       if (this.onTileUpdate) {
-        // console.log("repurposed");
-        this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix);
+        this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
       }
     }
 
     this.usedTileMap = usedTileMapNew;
 
-
-
-
-
-    // console.time("v0")
-    // for (let i = 0; i < allTileIndices.length; i += 1) {
-    //   const tileIndex = allTileIndices[i];
-    //   let tile: Tile;
-
-    //   if (this.tilePool.length >= i + 1) {
-    //     tile = this.tilePool[i];
-    //   } else {
-    //     const material = this.onSetTileMaterial(tileIndex);
-    //     tile = new Tile(this.tileGeometry, material);
-    //     this.tilePool.push(tile);
-    //   }
-
-    //   tile.setTileIndex(tileIndex);
-    //   this.tileContainer.add(tile);
-      
-    //   if (this.onTileUpdate) {
-    //     this.onTileUpdate(tile, matrix);
-    //   }
-    // }
-    // console.timeEnd("v0")
-    
-  }
-
-  render(gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
-    // Escape if not rendering
-    if (!this.shouldShowCurrent) return;
-
+    // Actual rendering
     this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
-    // this.map.triggerRepaint();
+  }
+
+  setOpacity(opacity: number) {
+    this.opacity = Math.max(0, Math.min(opacity, 1));
+    if (this.map) {
+      this.map.triggerRepaint();
+    }
   }
 }

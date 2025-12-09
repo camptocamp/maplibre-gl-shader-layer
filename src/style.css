@@ -1,10 +1,71 @@
 html,
 body {
   margin: 0;
-  background-color: rgb(2, 0, 36);
+  background: radial-gradient(circle,rgb(255, 255, 255) 50%, rgb(174, 187, 221) 90%);
 }
 
 #map {
   width: 100vw;
   height: 100vh;
+}
+
+
+#series-slider {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  width: 90vw;
+  left: 0;
+  right: 0;
+  margin: auto;
+  filter: drop-shadow(0px 0px 10px #ffffff);
+  margin-top: 15px;
+}
+
+#picking-display {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 2;
+  width: fit-content;
+  font-size: 3em;
+  font-family: monospace;
+  color: #ffffff;
+  font-weight: 600;
+  filter: drop-shadow(0px 0px 10px #000A);
+  margin-bottom: 10px;
+}
+
+#date-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 2;
+  width: fit-content;
+  font-size: 3em;
+  font-family: monospace;
+  color: #ffffff;
+  font-weight: 600;
+  filter: drop-shadow(0px 0px 10px #000A);
+  margin-top: 30px;
+}
+
+#opacity-slider {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  height: 200px;
+  margin: auto;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: slider-vertical;
+  width: 16px;
+  vertical-align: bottom;
+  filter: drop-shadow(0px 0px 10px #ffffff);
+  margin-left: 10px;
 }

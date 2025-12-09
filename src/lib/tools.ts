@@ -1,6 +1,4 @@
-import maplibregl, { CoveringTilesOptions, CoveringZoomOptions, IMercatorCoordinate, IntersectionResult, IReadonlyTransform, MercatorCoordinate, Point, Point2D } from "maplibre-gl";
-import {getTileBBox} from '@mapbox/whoots-js';
-import { Mat4 } from "./ShaderTiledLayer";
+import maplibregl, { type LngLat, MercatorCoordinate } from "maplibre-gl";
 
 export type TileIndex = {
   z: number;
@@ -55,6 +53,11 @@ function mercatorToTileIndex(
   return tileIndex;
 }
 
+export function wgs84ToTileIndex(position: LngLat, zoom: number, strict = true): TileIndex {
+  const merCoord = MercatorCoordinate.fromLngLat(position);
+  return mercatorToTileIndex([merCoord.x, merCoord.y], zoom, strict);
+}
+
 /**
  * Get the tile index
  */
@@ -72,13 +75,7 @@ export function getTileBoundsUnwrapped(map: maplibregl.Map, z: number): TileBoun
 
   // Compute unwrapped tile indices for a given z
   const nwTile = mercatorToTileIndex([nwMerc.x, nwMerc.y], z, true);
-  // nwTile[0] = Math.floor(nwTile[0]);
-  // nwTile[1] = Math.floor(nwTile[1]);
   const seTile = mercatorToTileIndex([seMerc.x, seMerc.y], z, true);
-  // seTile[0] = Math.floor(seTile[0]);
-  // seTile[1] = Math.floor(seTile[1]);
-  // console.log("nwTile", nwTile);
-  // console.log("seTile", seTile);
 
   return {
     min: {
@@ -94,7 +91,7 @@ export function getTileBoundsUnwrapped(map: maplibregl.Map, z: number): TileBoun
   };
 }
 
-export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileIndex[] {  
+export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileIndex[] {
   const allTileIndices: TileIndex[] = [];
   const z = tbu.min.z;
 
@@ -120,7 +117,7 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
   const nbTilePerAxis = 2 ** tileIndex.z;
   let x = tileIndex.x % nbTilePerAxis;
   if (x < 0) {
-    x = nbTilePerAxis + x ;
+    x = nbTilePerAxis + x;
   }
   return {
     x: x,
@@ -129,100 +126,115 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
   } as TileIndex;
 }
 
-
-function tileIndexToMercatorCenterAndSize(ti: TileIndex): {mercCenter: maplibregl.MercatorCoordinate, mercSize: number} {
+function tileIndexToMercatorCenterAndSize(ti: TileIndex): {
+  mercCenter: maplibregl.MercatorCoordinate;
+  mercSize: number;
+} {
   const nbTiles = 2 ** ti.z;
   const mercSize = 1 / nbTiles;
-  const mercCenter = new maplibregl.MercatorCoordinate(
-    ti.x * mercSize + mercSize / 2,
-    ti.y * mercSize + mercSize / 2,
-  );
+  const mercCenter = new maplibregl.MercatorCoordinate(ti.x * mercSize + mercSize / 2, ti.y * mercSize + mercSize / 2);
 
   return {
     mercSize,
     mercCenter,
-  }
+  };
 }
 
 /**
  * Checks if the center and the corners of a tile are visible in viewport
  */
-export function isTileInViewport(ti: TileIndex, map: maplibregl.Map, mapcanvasWidth: number, mapCanvasHeight: number): boolean {
-  const {mercCenter, mercSize} = tileIndexToMercatorCenterAndSize(ti);
+export function isTileInViewport(
+  ti: TileIndex,
+  map: maplibregl.Map,
+  mapcanvasWidth: number,
+  mapCanvasHeight: number,
+): boolean {
+  const { mercCenter, mercSize } = tileIndexToMercatorCenterAndSize(ti);
 
-  // using a 5% margin around the 
+  // using a 5% margin around the
   const canvasMarginW = mapcanvasWidth * 0.05;
   const canvasMarginH = mapCanvasHeight * 0.05;
   const mapCanvasWidthLowerBound = -canvasMarginW;
   const mapCanvasWidthUpperBound = mapcanvasWidth + canvasMarginW;
   const mapCanvasHeightLowerBound = -canvasMarginH;
-  const mapCanvasHeightUpperBound = mapCanvasHeight + canvasMarginH;  
+  const mapCanvasHeightUpperBound = mapCanvasHeight + canvasMarginH;
   let screenPos = map.project(mercCenter.toLngLat());
 
-  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+  if (
+    screenPos.x >= mapCanvasWidthLowerBound &&
+    screenPos.x <= mapCanvasWidthUpperBound &&
+    screenPos.y >= mapCanvasHeightLowerBound &&
+    screenPos.y <= mapCanvasHeightUpperBound
+  ) {
     return true;
   }
 
   const halfMercSize = mercSize / 2;
-  const mercTopLeft = new maplibregl.MercatorCoordinate(
-    mercCenter.x - halfMercSize,
-    mercCenter.y - halfMercSize,
-  );
+  const mercTopLeft = new maplibregl.MercatorCoordinate(mercCenter.x - halfMercSize, mercCenter.y - halfMercSize);
   screenPos = map.project(mercTopLeft.toLngLat());
 
-  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+  if (
+    screenPos.x >= mapCanvasWidthLowerBound &&
+    screenPos.x <= mapCanvasWidthUpperBound &&
+    screenPos.y >= mapCanvasHeightLowerBound &&
+    screenPos.y <= mapCanvasHeightUpperBound
+  ) {
     return true;
   }
 
-
-  const mercTopRight = new maplibregl.MercatorCoordinate(
-    mercCenter.x + halfMercSize,
-    mercCenter.y - halfMercSize,
-  );
+  const mercTopRight = new maplibregl.MercatorCoordinate(mercCenter.x + halfMercSize, mercCenter.y - halfMercSize);
   screenPos = map.project(mercTopRight.toLngLat());
 
-  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+  if (
+    screenPos.x >= mapCanvasWidthLowerBound &&
+    screenPos.x <= mapCanvasWidthUpperBound &&
+    screenPos.y >= mapCanvasHeightLowerBound &&
+    screenPos.y <= mapCanvasHeightUpperBound
+  ) {
     return true;
   }
 
-  const mercBottomLeft = new maplibregl.MercatorCoordinate(
-    mercCenter.x - halfMercSize,
-    mercCenter.y + halfMercSize,
-  );
+  const mercBottomLeft = new maplibregl.MercatorCoordinate(mercCenter.x - halfMercSize, mercCenter.y + halfMercSize);
   screenPos = map.project(mercBottomLeft.toLngLat());
 
-  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+  if (
+    screenPos.x >= mapCanvasWidthLowerBound &&
+    screenPos.x <= mapCanvasWidthUpperBound &&
+    screenPos.y >= mapCanvasHeightLowerBound &&
+    screenPos.y <= mapCanvasHeightUpperBound
+  ) {
     return true;
   }
 
-  const mercBottomRight = new maplibregl.MercatorCoordinate(
-    mercCenter.x + halfMercSize,
-    mercCenter.y + halfMercSize,
-  );
+  const mercBottomRight = new maplibregl.MercatorCoordinate(mercCenter.x + halfMercSize, mercCenter.y + halfMercSize);
   screenPos = map.project(mercBottomRight.toLngLat());
 
-  if (screenPos.x >= mapCanvasWidthLowerBound && screenPos.x <= mapCanvasWidthUpperBound && screenPos.y >= mapCanvasHeightLowerBound && screenPos.y <= mapCanvasHeightUpperBound) {
+  if (
+    screenPos.x >= mapCanvasWidthLowerBound &&
+    screenPos.x <= mapCanvasWidthUpperBound &&
+    screenPos.y >= mapCanvasHeightLowerBound &&
+    screenPos.y <= mapCanvasHeightUpperBound
+  ) {
     return true;
   }
 
-  return false
+  return false;
 }
 
-
-
-export function tileBoundsUnwrappedToTileList2(map: maplibregl.Map): TileIndex[] {  
-  const zoom = Math.floor(map.getZoom());
-  return map.transform.coveringTiles({tileSize: 512})
-    // .filter(el => el.overscaledZ === zoom)
-    .map(el => {
-    return {
-      z: el.canonical.z,
-      x: el.canonical.x,
-      y: el.canonical.y
-    } as TileIndex;
-  })
+export function tileBoundsUnwrappedToTileList2(map: maplibregl.Map): TileIndex[] {
+  return (
+    map
+      .coveringTiles({ tileSize: 512 })
+      // .filter(el => el.overscaledZ === zoom)
+      .map((el) => {
+        return {
+          z: el.canonical.z,
+          x: el.canonical.x,
+          y: el.canonical.y,
+        } as TileIndex;
+      })
+  );
 }
-
 
 /**
  * Modulo function, as opposed to javascript's `%`, which is a remainder.
@@ -241,7 +253,14 @@ export function mod(n: number, m: number): number {
  * @param tileIdZ - Tile's zoom.
  * @returns A 3D vector - coordinates of the projected point on a unit sphere.
  */
-export function projectTileCoordinatesToSphere(inTileX: number, inTileY: number, tileIdX: number, tileIdY: number, tileIdZ: number, nbSections: number): [number, number, number] {
+export function projectTileCoordinatesToSphere(
+  inTileX: number,
+  inTileY: number,
+  tileIdX: number,
+  tileIdY: number,
+  tileIdZ: number,
+  nbSections: number,
+): [number, number, number] {
   // This code could be assembled from 3 fuctions, but this is a hot path for symbol placement,
   // so for optimization purposes everything is inlined by hand.
   //
@@ -251,19 +270,21 @@ export function projectTileCoordinatesToSphere(inTileX: number, inTileY: number,
   //     const sphere = angularCoordinatesRadiansToVector(angular[0], angular[1]);
   //     return sphere;
   const scale = 1.0 / (1 << tileIdZ);
-  const mercatorX = inTileX / nbSections * scale + tileIdX * scale;
-  const mercatorY = inTileY / nbSections * scale + tileIdY * scale;
+  const mercatorX = (inTileX / nbSections) * scale + tileIdX * scale;
+  const mercatorY = (inTileY / nbSections) * scale + tileIdY * scale;
   const sphericalX = mod(mercatorX * Math.PI * 2.0 + Math.PI, Math.PI * 2);
-  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - (mercatorY * Math.PI * 2.0))) - Math.PI * 0.5;
+  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - mercatorY * Math.PI * 2.0)) - Math.PI * 0.5;
   const len = Math.cos(sphericalY);
-  return [
-    Math.sin(sphericalX) * len,
-    Math.sin(sphericalY),
-    Math.cos(sphericalX) * len
-  ]
+  return [Math.sin(sphericalX) * len, Math.sin(sphericalY), Math.cos(sphericalX) * len];
 }
 
-export function projectTileCoordinatesToSphereUV(u: number, v: number, tileIdX: number, tileIdY: number, tileIdZ: number): [number, number, number] {
+export function projectTileCoordinatesToSphereUV(
+  u: number,
+  v: number,
+  tileIdX: number,
+  tileIdY: number,
+  tileIdZ: number,
+): [number, number, number] {
   // This code could be assembled from 3 fuctions, but this is a hot path for symbol placement,
   // so for optimization purposes everything is inlined by hand.
   //
@@ -276,11 +297,38 @@ export function projectTileCoordinatesToSphereUV(u: number, v: number, tileIdX: 
   const mercatorX = u * scale + tileIdX * scale;
   const mercatorY = v * scale + tileIdY * scale;
   const sphericalX = mod(mercatorX * Math.PI * 2.0 + Math.PI, Math.PI * 2);
-  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - (mercatorY * Math.PI * 2.0))) - Math.PI * 0.5;
+  const sphericalY = 2.0 * Math.atan(Math.exp(Math.PI - mercatorY * Math.PI * 2.0)) - Math.PI * 0.5;
   const len = Math.cos(sphericalY);
-  return [
-    Math.sin(sphericalX) * len,
-    Math.sin(sphericalY),
-    Math.cos(sphericalX) * len
-  ]
+  return [Math.sin(sphericalX) * len, Math.sin(sphericalY), Math.cos(sphericalX) * len];
+}
+
+export function clamp(range: [number, number], value: number): number {
+  if (value < range[0]) {
+    return range[0];
+  }
+
+  if (value > range[1]) {
+    return range[1];
+  }
+
+  return value;
+}
+
+/**
+ * Get the pixel value in an HTMLImageElement with a nearest neighbor approach.
+ * unitPosition is a texture position, meaning in interval [0, 1]
+ */
+export function pickImg(img: HTMLImageElement, unitPosition: [number, number]): Uint8ClampedArray | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) return null;
+
+  const x = Math.floor(unitPosition[0] * img.width);
+  const y = Math.floor(unitPosition[1] * img.height);
+
+  ctx.drawImage(img, 0, 0);
+  return ctx.getImageData(x, y, 1, 1).data;
 }
