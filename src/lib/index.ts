@@ -7,4 +7,4 @@ export * from "./BaseShaderTiledLayer";
 export * from "./TextureTiledLayer";
 export * from "./Tile";
 export * from "./colormap";
-export * from "./colormap-collection";
+export * from "./colormapdescriptionlibrary";

@@ -1,0 +1,102 @@
+{
+  "name": "Global temperature (°C) at 2m elevation, resolution 0.25° (Meteo France ARPEGE)",
+  "description": "",
+  "attribution": [
+    "<a href=\"https://donneespubliques.meteofrance.fr/?fond=produit&id_produit=130&id_rubrique=51\">Meteo France ARPEGE</a>"
+  ],
+  "bounds": [
+    -20037508.342789244,
+    -20037508.342789244,
+    20037508.342789244,
+    20037508.342789244
+  ],
+  "crs": "EPSG:3857",
+  "minZoom": 0,
+  "maxZoom": 4,
+  "tileSize": 512,
+  "rasterFormat": "webp",
+  "rasterEncoding": {
+    "channels": "gb",
+    "vectorDimension": 1,
+    "polynomialSlope": 0.01,
+    "polynomialOffset": -200
+  },
+  "pixelUnit": "°C",
+  "seriesAxisName": "time",
+  "seriesAxisUnit": "second",
+  "metadata": {
+    "referenceTime": "2025-11-03T12:00:00Z"
+  },
+  "series": [
+    {
+      "tileUrlPattern": "2025-11-03T12:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762171200.0,
+      "metadata": {
+        "datetime": "2025-11-03T12:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T13:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762174800.0,
+      "metadata": {
+        "datetime": "2025-11-03T13:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T14:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762178400.0,
+      "metadata": {
+        "datetime": "2025-11-03T14:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T15:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762182000.0,
+      "metadata": {
+        "datetime": "2025-11-03T15:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T16:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762185600.0,
+      "metadata": {
+        "datetime": "2025-11-03T16:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T17:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762189200.0,
+      "metadata": {
+        "datetime": "2025-11-03T17:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T18:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762192800.0,
+      "metadata": {
+        "datetime": "2025-11-03T18:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T19:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762196400.0,
+      "metadata": {
+        "datetime": "2025-11-03T19:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T20:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762200000.0,
+      "metadata": {
+        "datetime": "2025-11-03T20:00:00Z"
+      }
+    },
+    {
+      "tileUrlPattern": "2025-11-03T21:00:00Z/{z}/{x}/{y}.webp",
+      "seriesAxisValue": 1762203600.0,
+      "metadata": {
+        "datetime": "2025-11-03T21:00:00Z"
+      }
+    }
+  ]
+}

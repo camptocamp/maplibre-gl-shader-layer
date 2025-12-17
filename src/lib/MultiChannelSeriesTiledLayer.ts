@@ -186,6 +186,8 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
   private readonly remoteTileTextureManager: RemoteTileTextureManager;
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
+    console.log("options", options);
+    
     super(id, {
       minZoom: options.datasetSpecification.minZoom,
       maxZoom: options.datasetSpecification.maxZoom,

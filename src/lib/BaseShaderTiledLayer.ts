@@ -123,6 +123,7 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.floor;
   protected opacity = 1;
+  private isVisible = true;
 
   constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;
@@ -141,6 +142,13 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
       } else if (options.tileZoomFitting === "ROUND") {
         this.tileZoomFittingFunction = Math.round;
       }
+    }
+  }
+
+  setVisible(v: boolean) {
+    this.isVisible = v;
+    if (this.map) {
+      this.map.triggerRepaint();
     }
   }
 
@@ -220,6 +228,10 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   }
 
   render(_gl: WebGLRenderingContext | WebGL2RenderingContext, options: maplibregl.CustomRenderMethodInput) {
+    if (!this.isVisible) {
+      return;
+    }
+
     this.shouldShowCurrent = this.shouldShow();
 
     // Escape if not rendering

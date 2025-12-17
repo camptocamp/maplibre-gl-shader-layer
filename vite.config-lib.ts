@@ -8,16 +8,16 @@ export default defineConfig({
     copyPublicDir: false,
     minify: true,
     sourcemap: true,
+    outDir: "dist-lib",
     lib: {
       entry: resolve(__dirname, 'src/lib/index.ts'),
-      name: 'shadertiledlayer',
-      fileName: (format, entryName) => "shadertiledlayer.js",
+      name: 'maplibre-gl-shader-layer',
+      fileName: (format, entryName) => "maplibre-gl-shader-layer.js",
       formats: ['es'],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled into your library
       external: [
-        "@mapbox/whoots-js",
         "basemapkit",
         "color",
         "maplibre-gl",
