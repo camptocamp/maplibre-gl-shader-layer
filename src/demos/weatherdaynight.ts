@@ -9,6 +9,7 @@ import {
 } from "../lib/MultiChannelSeriesTiledLayer";
 import { ColormapDescriptionLibrary } from "../lib/colormapdescriptionlibrary";
 import { glyphs, lang, pmtiles, sprite } from "./constant";
+import { DaylightLayer } from "../lib/DaylightLayer";
 
 
 const seriesConfig = {
@@ -31,7 +32,7 @@ const seriesConfig = {
 
 type WeatherVariableId = keyof typeof seriesConfig;
 
-export async function weatherDemo(weatherVariableId: WeatherVariableId) {
+export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -89,6 +90,9 @@ export async function weatherDemo(weatherVariableId: WeatherVariableId) {
 
   await new Promise((resolve) => map.on("load", resolve));
 
+  const daylightLayer = new DaylightLayer("daylight", {opacity: 0.9});
+  map.addLayer(daylightLayer, "earth_line");
+
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
     datasetSpecification: seriesInfo,
     colormap: seriesConfig[weatherVariableId].colormap,
@@ -105,7 +109,10 @@ export async function weatherDemo(weatherVariableId: WeatherVariableId) {
   seriesSlider.addEventListener("input", () => {
     const sliderTimestamp = Number.parseFloat(seriesSlider.value);
     layer.setSeriesAxisValue(sliderTimestamp);
+    updateDisplay();
+  });
 
+  const updateDisplay = () => {
     // We could take the one from the slider, but the layer add a safety clapming
     const seriesAxisValue = layer.getSeriesAxisValue();
     const sliderDate = new Date(seriesAxisValue * 1000);
@@ -115,15 +122,18 @@ export async function weatherDemo(weatherVariableId: WeatherVariableId) {
       timeStyle: "short",
     }).format(sliderDate);
 
+    daylightLayer.setDate(sliderDate);
     dateDisplay.innerText = dateStr;
-  });
+  }
+
+  updateDisplay();
 
   seriesSlider.addEventListener("pointerenter", () => {
     layer.prefetchSeriesTexture(-15, 15);
   });
 
   opacitySlider.addEventListener("input", () => {
-    layer.setOpacity(Number.parseFloat(opacitySlider.value));
+    daylightLayer.setOpacity(Number.parseFloat(opacitySlider.value));
   });
 
   map.on("mousemove", async (e: MapMouseEvent) => {

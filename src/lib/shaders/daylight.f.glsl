@@ -10,6 +10,7 @@ uniform sampler2D colormapTex;
 uniform float date;
 uniform float zoom;
 uniform vec3 tileIndex;
+uniform float opacity;
 
 in vec2 vPositionUnit;
 in vec2 vLonLat;
@@ -153,6 +154,5 @@ void main()  {
   float azimuthDeg = sunAzimuth * 180.0 / PI;
   float altitudeDeg = sunAltitude * 180.0 / PI; // 90° is zenith, 0° is at horizon level
   fragColor = getTextureColor(altitudeDeg);
-
-//   fragColor = vec4(lonLat.x + 45., 0., 0., 0.8);
+  fragColor.a *= opacity;
 }

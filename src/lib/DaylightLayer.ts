@@ -15,6 +15,7 @@ import { Colormap } from "./colormap";
 
 export type DaylightLayerOptions = {
   date?: Date;
+  opacity?: number;
 };
 
 export class DaylightLayer extends BaseShaderTiledLayer {
@@ -23,13 +24,13 @@ export class DaylightLayer extends BaseShaderTiledLayer {
   constructor(id: string, options: DaylightLayerOptions = {}) {
     const colormap = Colormap.fromColormapDescription([
       -20,
-      "rgba(21, 32, 69, 0.3)",
+      "rgba(9, 14, 31, 0.9)",
       -1,
-      "rgba(21, 32, 69, 0.3)",
+      "rgba(9, 14, 31, 0.9)",
       0,
-      "rgba(21, 32, 69, 0.0)",
+      "rgba(9, 14, 31, 0.0)",
       10,
-      "rgba(21, 32, 69, 0.0)",
+      "rgba(9, 14, 31, 0.0)",
     ]);
 
     super(id, {
@@ -49,6 +50,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: mapProjection && mapProjection.type === "globe" },
             date: { value: +this.date / 1000 },
+            opacity: { value: this.opacity },
           },
 
           vertexShader: vertexShader,
@@ -73,12 +75,17 @@ export class DaylightLayer extends BaseShaderTiledLayer {
         const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
         mat.uniforms.zoom.value = zoom;
         mat.uniforms.isGlobe.value = isGlobe;
+        mat.uniforms.opacity.value = this.opacity;
         mat.uniforms.date.value = +this.date / 1000;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
       },
     });
 
     this.date = options.date ?? new Date();
+
+    if (options.opacity) {
+      this.setOpacity(options.opacity);
+    }
   }
 
   setDate(date: Date) {

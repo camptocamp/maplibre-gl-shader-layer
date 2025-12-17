@@ -2,6 +2,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import { weatherDemo } from "./demos/weather";
 import { dummyDemo } from "./demos/dummy";
+import { weatherDayNightDemo } from "./demos/weatherdaynight";
 
 const demos = {
   dummy: () => {
@@ -12,8 +13,16 @@ const demos = {
     weatherDemo("temperature_2m");
   },
 
-  windSpeed: () => {
+  windspeed: () => {
     weatherDemo("wind_speed_10m");
+  },
+
+  "temperature-day-night": () => {
+    weatherDayNightDemo("temperature_2m")
+  },
+
+  "windspeed-day-night": () => {
+    weatherDayNightDemo("wind_speed_10m");
   },
 } as const;
 
