@@ -7,10 +7,13 @@ precision highp int;
 uniform float colormapRangeMin;
 uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
-uniform float date;
 uniform float zoom;
 uniform vec3 tileIndex;
 uniform float opacity;
+uniform float sunCoordRa;
+uniform float sunCoordDec;
+uniform float daysJ2K;
+uniform float sideralTimeComponent;
 
 in vec2 vPositionUnit;
 in vec2 vLonLat;
@@ -24,16 +27,6 @@ const float J2000 = 2451545.0;
 // Obliquity of Earth
 const float E = RAD * 23.4397;
 
-// Convert timestamp (seconds) to Julian date
-float toJulian(float timestamp) {
-    float dateMs = timestamp * 1000.0;
-    return dateMs / DAY_MS - 0.5 + J1970;
-}
-
-// Convert Julian date to days since J2000
-float toDays(float timestamp) {
-    return toJulian(timestamp) - J2000;
-}
 
 // Solar mean anomaly
 float solarMeanAnomaly(float d) {
@@ -66,9 +59,15 @@ void sunCoords(float d, out float dec, out float ra) {
 }
 
 // Sidereal time
-float siderealTime(float d, float lw) {
+float siderealTime_OLD(float d, float lw) {
     return RAD * (280.16 + 360.9856235 * d) - lw;
 }
+
+float siderealTime(float lw) {
+    return sideralTimeComponent - lw;
+}
+
+
 
 // Azimuth
 float azimuth(float H, float phi, float dec) {
@@ -80,26 +79,38 @@ float altitude(float H, float phi, float dec) {
     return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H));
 }
 
-// Main function to get sun position
-// Input: vLonLat (vec2 with longitude, latitude in degrees)
-//        timestamp (float in seconds since Unix epoch)
-// Output: vec2(azimuth, altitude) in radians
-vec2 getSunPosition(vec2 lonLat, float timestamp) {
+
+float getSunAltitude(vec2 lonLat) {
     float lng = lonLat.x;
     float lat = lonLat.y;
     
     float lw = RAD * -lng;
     float phi = RAD * lat;
-    float d = toDays(timestamp);
+
+
+    // Note: important to decompose this into some trigonometry annoyance so that numerical precision is kept on GPU
+    // float H = (sideralTimeComponent - lw) - sunCoordRa;
+    // float cosH = cos(sideralTimeComponent - (lw + sunCoordRa));
+    float cosH = cos(sideralTimeComponent) * cos(lw + sunCoordRa) + sin(sideralTimeComponent) * sin(lw + sunCoordRa);
+
+    float altitude = asin(sin(phi) * sin(sunCoordDec) + cos(phi) * cos(sunCoordDec) * cosH);
+
+    return altitude;
+}
+
+
+vec2 getSunPosition(vec2 lonLat) {
+    float lng = lonLat.x;
+    float lat = lonLat.y;
     
-    float dec, ra;
-    sunCoords(d, dec, ra);
+    float lw = RAD * -lng;
+    float phi = RAD * lat;
     
-    float H = siderealTime(d, lw) - ra;
+    float H = siderealTime(lw) - sunCoordRa;
     
     return vec2(
-        azimuth(H, phi, dec),
-        altitude(H, phi, dec)
+        azimuth(H, phi, sunCoordDec),
+        altitude(H, phi, sunCoordDec)
     );
 }
 
@@ -143,15 +154,18 @@ vec4 getTextureColor(float realWorldValue) {
 
 
 void main()  {
-  // vec2 sunPos = getSunPosition(vLonLat, date);
   highp vec2 lonLat = tileToLonLat(tileIndex, vPositionUnit);
 
-  vec2 sunPos = getSunPosition(lonLat, date);
+//   vec2 sunPos = getSunPosition(lonLat);
 
 
-  float sunAzimuth = sunPos.x;   // in radians
-  float sunAltitude = sunPos.y;  // in radians
-  float azimuthDeg = sunAzimuth * 180.0 / PI;
+//   float sunAzimuth = sunPos.x;   // in radians
+//   float sunAltitude = sunPos.y;  // in radians
+
+  float sunAltitude = getSunAltitude(lonLat);
+
+
+//   float azimuthDeg = sunAzimuth * 180.0 / PI;
   float altitudeDeg = sunAltitude * 180.0 / PI; // 90° is zenith, 0° is at horizon level
   fragColor = getTextureColor(altitudeDeg);
   fragColor.a *= opacity;

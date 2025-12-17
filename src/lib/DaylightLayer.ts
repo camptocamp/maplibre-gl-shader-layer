@@ -18,6 +18,86 @@ export type DaylightLayerOptions = {
   opacity?: number;
 };
 
+
+
+
+
+
+
+
+
+
+// Date/time constants
+const DAY_MS = 1000.0 * 60.0 * 60.0 * 24.0;
+const J1970 = 2440588.0;
+const J2000 = 2451545.0;
+const RAD = Math.PI / 180.0;
+
+// Obliquity of Earth
+const E = RAD * 23.4397;
+
+// Convert timestamp (seconds) to Julian date
+function toJulian(timestamp: number): number {
+  const dateMs = timestamp * 1000.0;
+  return dateMs / DAY_MS - 0.5 + J1970;
+}
+
+// Convert Julian date to days since J2000
+function toDays(timestamp: number): number {
+  return toJulian(timestamp) - J2000;
+}
+
+function solarMeanAnomaly(d: number): number {
+  return RAD * (357.5291 + 0.98560028 * d);
+}
+
+function eclipticLongitude(M: number): number {
+  const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2.0 * M) + 0.0003 * Math.sin(3.0 * M));
+  const P = RAD * 102.9372;
+  return M + C + P + Math.PI;
+}
+
+function declination(l: number, b: number): number {
+  return Math.asin(Math.sin(b) * Math.cos(E) + Math.cos(b) * Math.sin(E) * Math.sin(l));
+}
+
+function rightAscension(l: number, b: number): number {
+  return Math.atan2(Math.sin(l) * Math.cos(E) - Math.tan(b) * Math.sin(E), Math.cos(l));
+}
+
+function sunCoords(d: number): {dec: number, ra: number} {
+  const M = solarMeanAnomaly(d);
+  const L = eclipticLongitude(M);
+  const dec = declination(L, 0.0);
+  const ra = rightAscension(L, 0.0);
+
+  return {dec, ra};
+}
+
+
+function computeSideralTimeComponent(day2YK: number): number {
+  return RAD * (280.16 + 360.9856235 * day2YK);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export class DaylightLayer extends BaseShaderTiledLayer {
   private date: Date;
 
@@ -33,9 +113,16 @@ export class DaylightLayer extends BaseShaderTiledLayer {
       "rgba(9, 14, 31, 0.0)",
     ]);
 
+    
+
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {
         const mapProjection = this.map.getProjection();
+
+        const timestamp = +this.date / 1000;
+        const daysJ2K = toDays(timestamp);
+        const {dec, ra} = sunCoords(daysJ2K);
+        const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
         const material = new RawShaderMaterial({
           // This automatically adds the top-level instruction:
@@ -49,8 +136,12 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: mapProjection && mapProjection.type === "globe" },
-            date: { value: +this.date / 1000 },
+            date: { value: timestamp },
             opacity: { value: this.opacity },
+            sunCoordRa: { value: ra },
+            sunCoordDec: { value: dec },
+            daysJ2K: { value: daysJ2K },
+            sideralTimeComponent: {value: sideralTimeComponent},
           },
 
           vertexShader: vertexShader,
@@ -67,6 +158,11 @@ export class DaylightLayer extends BaseShaderTiledLayer {
       onTileUpdate: (tile: Tile, _matrix: Mat4) => {
         (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();
 
+        const timestamp = +this.date / 1000;
+        const daysJ2K = toDays(timestamp);
+        const {dec, ra} = sunCoords(daysJ2K);
+        const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
+
         const mapProjection = this.map.getProjection();
         const tileIndeArray = tile.getTileIndexAsArray();
         const mat = tile.material as RawShaderMaterial;
@@ -76,8 +172,13 @@ export class DaylightLayer extends BaseShaderTiledLayer {
         mat.uniforms.zoom.value = zoom;
         mat.uniforms.isGlobe.value = isGlobe;
         mat.uniforms.opacity.value = this.opacity;
-        mat.uniforms.date.value = +this.date / 1000;
+        mat.uniforms.date.value = timestamp;
+        mat.uniforms.sunCoordRa.value = ra;
+        mat.uniforms.sunCoordDec.value = dec;
+        mat.uniforms.daysJ2K.value = daysJ2K;
+        mat.uniforms.sideralTimeComponent.value = sideralTimeComponent;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+
       },
     });
 
@@ -95,3 +196,6 @@ export class DaylightLayer extends BaseShaderTiledLayer {
     }
   }
 }
+
+
+
