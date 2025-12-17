@@ -3,10 +3,15 @@ import "./style.css";
 import { weatherDemo } from "./demos/weather";
 import { dummyDemo } from "./demos/dummy";
 import { weatherDayNightDemo } from "./demos/weatherdaynight";
+import { dayNightDemo } from "./demos/daynight";
 
 const demos = {
   dummy: () => {
     dummyDemo();
+  },
+
+  "day-night": () => {
+    dayNightDemo()
   },
 
   temperature: () => {
