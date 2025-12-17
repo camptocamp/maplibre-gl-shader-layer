@@ -36,6 +36,7 @@ export async function dayNightDemo() {
     glyphs,
     lang,
     hidePOIs: true,
+    // globe: false,
   });
 
   const map = new maplibregl.Map({

@@ -81,7 +81,7 @@ export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) 
 
   const map = new maplibregl.Map({
     container,
-    hash: false,
+    hash: true,
     zoom: 4,
     center: [27.35, 38.92],
     style: style,

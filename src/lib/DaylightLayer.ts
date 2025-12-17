@@ -81,23 +81,6 @@ function computeSideralTimeComponent(day2YK: number): number {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export class DaylightLayer extends BaseShaderTiledLayer {
   private date: Date;
 
@@ -105,15 +88,13 @@ export class DaylightLayer extends BaseShaderTiledLayer {
     const colormap = Colormap.fromColormapDescription([
       -20,
       "rgba(9, 14, 31, 0.9)",
-      -1,
+      -1.5,
       "rgba(9, 14, 31, 0.9)",
-      0,
+      0.,
       "rgba(9, 14, 31, 0.0)",
       10,
       "rgba(9, 14, 31, 0.0)",
     ]);
-
-    
 
     super(id, {
       onSetTileMaterial: (tileIndex: TileIndex) => {
@@ -140,7 +121,6 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             opacity: { value: this.opacity },
             sunCoordRa: { value: ra },
             sunCoordDec: { value: dec },
-            daysJ2K: { value: daysJ2K },
             sideralTimeComponent: {value: sideralTimeComponent},
           },
 
@@ -175,10 +155,8 @@ export class DaylightLayer extends BaseShaderTiledLayer {
         mat.uniforms.date.value = timestamp;
         mat.uniforms.sunCoordRa.value = ra;
         mat.uniforms.sunCoordDec.value = dec;
-        mat.uniforms.daysJ2K.value = daysJ2K;
         mat.uniforms.sideralTimeComponent.value = sideralTimeComponent;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
-
       },
     });
 
