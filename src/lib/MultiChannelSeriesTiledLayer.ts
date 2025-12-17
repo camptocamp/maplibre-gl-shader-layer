@@ -219,6 +219,7 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
                 size: this.colormapGradient ? 512 : 4096,
               }),
             },
+            altitude: { value: this.altitude },
           },
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
@@ -264,6 +265,7 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
         material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
         material.uniforms.zoom.value = zoom;
         material.uniforms.isGlobe.value = isGlobe;
+        material.uniforms.altitude.value = this.altitude;
         (material.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
       },
     });

@@ -1,7 +1,6 @@
 export * from "./DaylightLayer";
 export * from "./DummyGradientTiledLayer";
 export * from "./MultiChannelSeriesTiledLayer";
-export * from "./MultiChannelTiledLayer";
 export * from "./RemoteTileTextureManager";
 export * from "./BaseShaderTiledLayer";
 export * from "./TextureTiledLayer";

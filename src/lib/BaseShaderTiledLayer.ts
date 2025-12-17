@@ -123,8 +123,9 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected onTileUpdate: UpdateTileMaterialFunction | null = null;
   private tileZoomFittingFunction: (v: number) => number = Math.floor;
   protected opacity = 1;
-  private isVisible = true;
-
+  protected altitude = 0;
+  protected isVisible = true;
+  
   constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;
     this.initScene();
@@ -301,6 +302,18 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
 
   setOpacity(opacity: number) {
     this.opacity = Math.max(0, Math.min(opacity, 1));
+    if (this.map) {
+      this.map.triggerRepaint();
+    }
+  }
+
+
+  /**
+   * Set the altitude of the layer in meters.
+   * (Only for globe mode)
+   */
+  setAltitude(altitude: number) {
+    this.altitude = Math.max(altitude, 0);
     if (this.map) {
       this.map.triggerRepaint();
     }

@@ -18,6 +18,7 @@ export async function dummyDemo() {
 
   const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
   if (!opacitySlider) throw new Error("Slider not working");
+  opacitySlider.value = "0";
 
   const pickindDisplay = document.getElementById("picking-display");
   if (!pickindDisplay) throw new Error("Picking display not working");
@@ -26,7 +27,7 @@ export async function dummyDemo() {
   if (!dateDisplay) throw new Error("Date display not working");
 
   [seriesSlider,
-  opacitySlider,
+  // opacitySlider,
   pickindDisplay,
   dateDisplay].forEach((el) => el.style.setProperty("display", "none"))
 
@@ -51,4 +52,8 @@ export async function dummyDemo() {
 
   const layer = new DummyGradientTiledLayer("dummy-layer");
   map.addLayer(layer);
+
+  opacitySlider.addEventListener("input", () => {
+    layer.setAltitude(Number.parseFloat(opacitySlider.value) * 1000000)
+  })
 }

@@ -26,6 +26,7 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
             zoom: { value: this.map.getZoom() },
             tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
             isGlobe: { value: mapProjection && mapProjection.type === "globe" },
+            altitude: { value: this.altitude },
           },
 
           vertexShader: vertexShader,
@@ -49,6 +50,7 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
         // At z12+, the globe is no longer globe in Maplibre
         const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
 
+        mat.uniforms.altitude.value = this.altitude;
         mat.uniforms.zoom.value = zoom;
         mat.uniforms.isGlobe.value = isGlobe;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);

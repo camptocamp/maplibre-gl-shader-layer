@@ -122,6 +122,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             sunCoordRa: { value: ra },
             sunCoordDec: { value: dec },
             sideralTimeComponent: {value: sideralTimeComponent},
+            altitude: {value: this.altitude},
           },
 
           vertexShader: vertexShader,
@@ -156,6 +157,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
         mat.uniforms.sunCoordRa.value = ra;
         mat.uniforms.sunCoordDec.value = dec;
         mat.uniforms.sideralTimeComponent.value = sideralTimeComponent;
+        mat.uniforms.altitude.value = this.altitude;
         (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
       },
     });
