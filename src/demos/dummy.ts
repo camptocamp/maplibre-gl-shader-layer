@@ -7,7 +7,7 @@ import { glyphs, lang, pmtiles, sprite } from "./constant";
 import { DummyGradientTiledLayer } from "../lib";
 
 
-export async function dummyDemo() {
+export async function dummyDemo(globe: boolean) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -37,6 +37,7 @@ export async function dummyDemo() {
     glyphs,
     lang,
     hidePOIs: true,
+    globe,
   });
 
   const map = new maplibregl.Map({

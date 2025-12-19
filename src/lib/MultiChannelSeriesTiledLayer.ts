@@ -221,7 +221,7 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
             },
             altitude: { value: this.altitude },
           },
-          vertexShader: vertexShader,
+          vertexShader: this.defaultVertexShader,
           fragmentShader: fragmentShader,
           side: BackSide,
           transparent: true,

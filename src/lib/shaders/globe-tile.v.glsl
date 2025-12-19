@@ -56,7 +56,9 @@ vec3 projectTileCoordinatesToSphere(vec2 uv, vec3 tileIndex, out vec2 lonLat) {
 vec3 projectTileCoordinatesToMercator(vec2 uv, vec3 tileIndex, out vec2 lonLat) {
   vec2 mercator = getMercatorCoords(uv, tileIndex);
   lonLat = mercatorToLonLat(mercator);
-  return vec3(mercator.x, mercator.y, 0.);
+  // Add a small offset to make the vertices float above the surface
+  float altitudeUnit =  altitude / EARTH_RADIUS / (2. * PI);
+  return vec3(mercator.x, mercator.y, altitudeUnit);
 }
 
 void main()	{

@@ -7,7 +7,11 @@ import { dayNightDemo } from "./demos/daynight";
 
 const demos = {
   dummy: () => {
-    dummyDemo();
+    dummyDemo(true);
+  },
+
+  "dummy-mercator": () => {
+    dummyDemo(false);
   },
 
   "day-night": () => {

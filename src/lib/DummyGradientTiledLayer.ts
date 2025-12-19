@@ -5,8 +5,7 @@
 
 import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
 import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
-// @ts-ignore
-import vertexShader from "./shaders/globe-tile.v.glsl?raw";
+
 // @ts-ignore
 import fragmentShader from "./shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "./tools";
@@ -29,7 +28,7 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
             altitude: { value: this.altitude },
           },
 
-          vertexShader: vertexShader,
+          vertexShader: this.defaultVertexShader,
           fragmentShader: fragmentShader,
           side: BackSide,
           transparent: true,

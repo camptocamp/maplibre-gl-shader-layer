@@ -17,6 +17,9 @@ import {
 } from "./tools";
 import { Tile } from "./Tile";
 
+// @ts-ignore
+import defaultVertexShader from "./shaders/globe-tile.v.glsl?raw";
+
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
  * - FLOOR: tileZ = floor(mapZ) => fairly low resolution tile, a tile can take up to most of the viewport
@@ -125,6 +128,7 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected opacity = 1;
   protected altitude = 0;
   protected isVisible = true;
+  protected readonly defaultVertexShader = defaultVertexShader;
   
   constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;

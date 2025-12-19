@@ -18,14 +18,10 @@ export type DaylightLayerOptions = {
   opacity?: number;
 };
 
-
-
-
-
-
-
-
-
+// The following sun calculation are borrowef from Volodymyr Agafonkin's Suncalc library:
+// https://github.com/mourner/suncalc
+// The reasons of not importing the whole library is because only a small part is used here
+// and another part of the logic has been moved to the fragment shader
 
 // Date/time constants
 const DAY_MS = 1000.0 * 60.0 * 60.0 * 24.0;
@@ -125,7 +121,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             altitude: {value: this.altitude},
           },
 
-          vertexShader: vertexShader,
+          vertexShader: this.defaultVertexShader,
           fragmentShader: fragmentShader,
           side: BackSide,
           transparent: true,
