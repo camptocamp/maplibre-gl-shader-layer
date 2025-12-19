@@ -1,6 +1,6 @@
 import QuickLRU from "quick-lru";
 import { type Texture, TextureLoader } from "three";
-import { type TileIndex, wrapTileIndex } from "./tools";
+import { type TileIndex, wrapTileIndex } from "../core/tools";
 
 export type TextureManagerOptions = {
   cacheSize?: number;

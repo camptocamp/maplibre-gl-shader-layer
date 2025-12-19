@@ -5,13 +5,11 @@
 
 import QuickLRU from "quick-lru";
 import { type Texture, TextureLoader, RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
-import { wrapTileIndex, type TileIndex } from "./tools";
-import type { Tile } from "./Tile";
+import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { wrapTileIndex, type TileIndex } from "../core/tools";
+import type { Tile } from "../core/Tile";
 // @ts-ignore
-import vertexShader from "./shaders/globe-tile.v.glsl?raw";
-// @ts-ignore
-import fragmentShader from "./shaders/texture-tile.f.glsl?raw";
+import fragmentShader from "../shaders/texture-tile.f.glsl?raw";
 
 export type TextureTiledLayerOptions = {
   minZoom?: number;

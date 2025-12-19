@@ -4,12 +4,12 @@
  */
 
 import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
+import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 
 // @ts-ignore
-import fragmentShader from "./shaders/dummy-gradient.f.glsl?raw";
-import type { TileIndex } from "./tools";
-import type { Tile } from "./Tile";
+import fragmentShader from "../shaders/dummy-gradient.f.glsl?raw";
+import type { TileIndex } from "../core/tools";
+import type { Tile } from "../core/Tile";
 
 export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
   constructor(id: string) {

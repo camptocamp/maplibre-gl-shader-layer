@@ -3,16 +3,14 @@
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
 import { RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
-import { clamp, pickImg, wgs84ToTileIndex, type TileIndex } from "./tools";
-import type { Tile } from "./Tile";
+import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { clamp, pickImg, wgs84ToTileIndex, type TileIndex } from "../core/tools";
+import type { Tile } from "../core/Tile";
 // @ts-ignore
-import vertexShader from "./shaders/globe-tile.v.glsl?raw";
-// @ts-ignore
-import fragmentShader from "./shaders/multi-channel-series-tile.f.glsl?raw";
-import type { Colormap } from "./colormap";
+import fragmentShader from "../shaders/multi-channel-series-tile.f.glsl?raw";
+import type { Colormap } from "../core/colormap";
 import type { LngLat } from "maplibre-gl";
-import { RemoteTileTextureManager } from "./RemoteTileTextureManager";
+import { RemoteTileTextureManager } from "../core/RemoteTileTextureManager";
 
 export type Bounds = [number, number, number, number];
 export type SeriesElement = {

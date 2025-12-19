@@ -18,7 +18,7 @@ import {
 import { Tile } from "./Tile";
 
 // @ts-ignore
-import defaultVertexShader from "./shaders/globe-tile.v.glsl?raw";
+import defaultVertexShader from "../shaders/globe-tile.v.glsl?raw";
 
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.

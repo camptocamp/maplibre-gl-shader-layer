@@ -4,7 +4,7 @@ import { getStyle } from "basemapkit";
 import { Protocol } from "pmtiles";
 
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-import { DaylightLayer } from "../lib/DaylightLayer";
+import { DaylightLayer } from "../lib";
 
 
 export async function dayNightDemo() {

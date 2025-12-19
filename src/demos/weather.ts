@@ -2,12 +2,12 @@
 import maplibregl, { type MapMouseEvent } from "maplibre-gl";
 import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
-import { Colormap } from "../lib/colormap";
 import {
+  Colormap,
   MultiChannelSeriesTiledLayer,
   type MultiChannelSeriesTiledLayerSpecification,
-} from "../lib/MultiChannelSeriesTiledLayer";
-import { ColormapDescriptionLibrary } from "../lib/colormapdescriptionlibrary";
+  ColormapDescriptionLibrary,
+} from "../lib";
 import { glyphs, lang, pmtiles, sprite } from "./constant";
 
 

@@ -1,9 +1,14 @@
-export * from "./DaylightLayer";
-export * from "./DummyGradientTiledLayer";
-export * from "./MultiChannelSeriesTiledLayer";
-export * from "./RemoteTileTextureManager";
-export * from "./BaseShaderTiledLayer";
-export * from "./TextureTiledLayer";
-export * from "./Tile";
-export * from "./colormap";
-export * from "./colormapdescriptionlibrary";
+// Core components
+export * from "./core/BaseShaderTiledLayer";
+export * from "./core/Tile";
+export * from "./core/colormap";
+export * from "./core/colormapdescriptionlibrary";
+export * from "./core/RemoteTileTextureManager";
+
+
+// Built-in layer types
+export * from "./layers/DaylightLayer";
+export * from "./layers/DummyGradientTiledLayer";
+export * from "./layers/MultiChannelSeriesTiledLayer";
+export * from "./layers/TextureTiledLayer";
+

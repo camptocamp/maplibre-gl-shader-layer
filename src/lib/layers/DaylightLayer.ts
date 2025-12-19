@@ -4,14 +4,12 @@
  */
 
 import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "./BaseShaderTiledLayer";
+import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 // @ts-ignore
-import vertexShader from "./shaders/globe-tile.v.glsl?raw";
-// @ts-ignore
-import fragmentShader from "./shaders/daylight.f.glsl?raw";
-import type { TileIndex } from "./tools";
-import type { Tile } from "./Tile";
-import { Colormap } from "./colormap";
+import fragmentShader from "../shaders/daylight.f.glsl?raw";
+import type { TileIndex } from "../core/tools";
+import type { Tile } from "../core/Tile";
+import { Colormap } from "../core/colormap";
 
 export type DaylightLayerOptions = {
   date?: Date;
