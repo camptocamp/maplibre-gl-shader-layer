@@ -31,7 +31,6 @@ const cloudCoverTransparent = [
   "rgba(255, 255, 255, 0.8)",
 ];
 
-
 // Homemade colormaps
 const cream = [0, "#1a4d6b", 0.25, "#2d6a8f", 0.5, "#4b8bb5", 0.75, "#c9a87c", 1, "#f5e6d3"];
 
@@ -297,7 +296,6 @@ for (let i = 0; i < turboColormapData.length; i += 1) {
   const turboStop = turboColormapData[i];
   turbo.push(i / 256, [~~(turboStop[0] * 255), ~~(turboStop[1] * 255), ~~(turboStop[2] * 255)]);
 }
-
 
 export const ColormapDescriptionLibrary = {
   presureBlueWhiteRed,

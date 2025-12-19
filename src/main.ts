@@ -4,6 +4,7 @@ import { weatherDemo } from "./demos/weather";
 import { dummyDemo } from "./demos/dummy";
 import { weatherDayNightDemo } from "./demos/weatherdaynight";
 import { dayNightDemo } from "./demos/daynight";
+import { simpletextureDemo } from "./demos/simpletexture";
 
 const demos = {
   dummy: () => {
@@ -15,7 +16,11 @@ const demos = {
   },
 
   "day-night": () => {
-    dayNightDemo()
+    dayNightDemo();
+  },
+
+  "simple-texture": () => {
+    simpletextureDemo();
   },
 
   temperature: () => {
@@ -27,7 +32,7 @@ const demos = {
   },
 
   "temperature-day-night": () => {
-    weatherDayNightDemo("temperature_2m")
+    weatherDayNightDemo("temperature_2m");
   },
 
   "windspeed-day-night": () => {
@@ -35,16 +40,14 @@ const demos = {
   },
 } as const;
 
-
 (() => {
-
   const params = new URLSearchParams(window.location.search);
   const demoNameParam = params.get("demo");
 
   if (demoNameParam && demoNameParam in demos) {
     demos[demoNameParam as keyof typeof demos]();
   } else {
-    location.href = "?demo=temperature"
+    location.href = "?demo=temperature";
   }
 
   const demoListContainer = document.getElementById("demo-list") as HTMLDivElement;
@@ -59,5 +62,4 @@ const demos = {
       demoLink.classList.add("selected-demo");
     }
   }
-
-})()
+})();

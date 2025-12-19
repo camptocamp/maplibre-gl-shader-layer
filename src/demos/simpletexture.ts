@@ -3,9 +3,9 @@ import { getStyle } from "basemapkit";
 import { Protocol } from "pmtiles";
 
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-import { DaylightLayer } from "../lib";
+import { TextureTiledLayer } from "../lib";
 
-export async function dayNightDemo() {
+export async function simpletextureDemo() {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -16,6 +16,7 @@ export async function dayNightDemo() {
 
   const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
   if (!opacitySlider) throw new Error("Slider not working");
+  opacitySlider.value = "0.6";
 
   const pickindDisplay = document.getElementById("picking-display");
   if (!pickindDisplay) throw new Error("Picking display not working");
@@ -23,7 +24,7 @@ export async function dayNightDemo() {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  [seriesSlider, opacitySlider, pickindDisplay, dateDisplay].forEach((el) => el.style.setProperty("display", "none"));
+  [seriesSlider, pickindDisplay, dateDisplay].forEach((el) => el.style.setProperty("display", "none"));
 
   const style = getStyle("avenue", {
     pmtiles,
@@ -44,6 +45,15 @@ export async function dayNightDemo() {
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const layer = new DaylightLayer("daylight", { opacity: 0.7 });
+  const layer = new TextureTiledLayer("texture-layer", {
+    textureUrlPattern: "/demo-tilesets/wind_speed_10m/2025-11-03T12:00:00Z/{z}/{x}/{y}.webp",
+    minZoom: 0,
+    maxZoom: 4,
+  });
+  layer.setOpacity(Number.parseFloat(opacitySlider.value));
   map.addLayer(layer);
+
+  opacitySlider.addEventListener("input", () => {
+    layer.setOpacity(Number.parseFloat(opacitySlider.value));
+  });
 }

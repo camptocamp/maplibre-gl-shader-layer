@@ -28,9 +28,9 @@
   "dependencies": {
     "basemapkit": "^0.5.0",
     "color": "^5.0.3",
-    "maplibre-gl": "^5.7.3",
+    "maplibre-gl": "^5.15.0",
     "pmtiles": "^4.3.0",
-    "quick-lru": "^7.0.0",
-    "three": "^0.166.1"
+    "quick-lru": "^7.3.0",
+    "three": "^0.182.0"
   }
 }

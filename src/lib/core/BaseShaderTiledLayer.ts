@@ -129,7 +129,7 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected altitude = 0;
   protected isVisible = true;
   protected readonly defaultVertexShader = defaultVertexShader;
-  
+
   constructor(id: string, options: BaseShaderTiledLayerOptions) {
     this.id = id;
     this.initScene();
@@ -310,7 +310,6 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
       this.map.triggerRepaint();
     }
   }
-
 
   /**
    * Set the altitude of the layer in meters.

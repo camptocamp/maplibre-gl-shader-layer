@@ -1,0 +1,28 @@
+import { ColormapDescription } from './colormap';
+export declare const ColormapDescriptionLibrary: {
+    readonly presureBlueWhiteRed: (string | number)[];
+    readonly teal: (string | number)[];
+    readonly cloudCoverTransparent: (string | number)[];
+    readonly cream: (string | number)[];
+    readonly lagoon: (string | number)[];
+    readonly poison: (string | number)[];
+    readonly twilight: (string | number)[];
+    readonly redVelvet: (string | number)[];
+    readonly ember: (string | number)[];
+    readonly hot: (number | number[])[];
+    readonly spring: (number | number[])[];
+    readonly summer: (number | number[])[];
+    readonly autumn: (number | number[])[];
+    readonly winter: (number | number[])[];
+    readonly yiorrd: (number | number[])[];
+    readonly blackbody: (number | number[])[];
+    readonly viridis: (number | number[])[];
+    readonly inferno: (number | number[])[];
+    readonly magma: (number | number[])[];
+    readonly bathymetry: (number | number[])[];
+    readonly density: (number | number[])[];
+    readonly salinity: (number | number[])[];
+    readonly temperature: (number | number[])[];
+    readonly velocityBlue: (number | number[])[];
+    readonly turbo: ColormapDescription;
+};

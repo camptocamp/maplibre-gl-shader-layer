@@ -59,21 +59,18 @@ function rightAscension(l: number, b: number): number {
   return Math.atan2(Math.sin(l) * Math.cos(E) - Math.tan(b) * Math.sin(E), Math.cos(l));
 }
 
-function sunCoords(d: number): {dec: number, ra: number} {
+function sunCoords(d: number): { dec: number; ra: number } {
   const M = solarMeanAnomaly(d);
   const L = eclipticLongitude(M);
   const dec = declination(L, 0.0);
   const ra = rightAscension(L, 0.0);
 
-  return {dec, ra};
+  return { dec, ra };
 }
-
 
 function computeSideralTimeComponent(day2YK: number): number {
   return RAD * (280.16 + 360.9856235 * day2YK);
 }
-
-
 
 export class DaylightLayer extends BaseShaderTiledLayer {
   private date: Date;
@@ -84,7 +81,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
       "rgba(9, 14, 31, 0.9)",
       -1.5,
       "rgba(9, 14, 31, 0.9)",
-      0.,
+      0,
       "rgba(9, 14, 31, 0.0)",
       10,
       "rgba(9, 14, 31, 0.0)",
@@ -96,7 +93,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
 
         const timestamp = +this.date / 1000;
         const daysJ2K = toDays(timestamp);
-        const {dec, ra} = sunCoords(daysJ2K);
+        const { dec, ra } = sunCoords(daysJ2K);
         const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
         const material = new RawShaderMaterial({
@@ -115,8 +112,8 @@ export class DaylightLayer extends BaseShaderTiledLayer {
             opacity: { value: this.opacity },
             sunCoordRa: { value: ra },
             sunCoordDec: { value: dec },
-            sideralTimeComponent: {value: sideralTimeComponent},
-            altitude: {value: this.altitude},
+            sideralTimeComponent: { value: sideralTimeComponent },
+            altitude: { value: this.altitude },
           },
 
           vertexShader: this.defaultVertexShader,
@@ -135,7 +132,7 @@ export class DaylightLayer extends BaseShaderTiledLayer {
 
         const timestamp = +this.date / 1000;
         const daysJ2K = toDays(timestamp);
-        const {dec, ra} = sunCoords(daysJ2K);
+        const { dec, ra } = sunCoords(daysJ2K);
         const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
         const mapProjection = this.map.getProjection();
@@ -170,6 +167,3 @@ export class DaylightLayer extends BaseShaderTiledLayer {
     }
   }
 }
-
-
-

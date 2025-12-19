@@ -1,11 +1,9 @@
-
 import maplibregl from "maplibre-gl";
 import { getStyle } from "basemapkit";
 import { Protocol } from "pmtiles";
 
 import { glyphs, lang, pmtiles, sprite } from "./constant";
 import { DummyGradientTiledLayer } from "../lib";
-
 
 export async function dummyDemo(globe: boolean) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
@@ -26,12 +24,9 @@ export async function dummyDemo(globe: boolean) {
   const dateDisplay = document.getElementById("date-display");
   if (!dateDisplay) throw new Error("Date display not working");
 
-  [seriesSlider,
-  // opacitySlider,
-  pickindDisplay,
-  dateDisplay].forEach((el) => el.style.setProperty("display", "none"))
+  [seriesSlider, pickindDisplay, dateDisplay].forEach((el) => el.style.setProperty("display", "none"));
 
-  let style = getStyle("avenue", {
+  const style = getStyle("avenue", {
     pmtiles,
     sprite,
     glyphs,
@@ -55,6 +50,6 @@ export async function dummyDemo(globe: boolean) {
   map.addLayer(layer);
 
   opacitySlider.addEventListener("input", () => {
-    layer.setAltitude(Number.parseFloat(opacitySlider.value) * 1000000)
-  })
+    layer.setAltitude(Number.parseFloat(opacitySlider.value) * 1000000);
+  });
 }

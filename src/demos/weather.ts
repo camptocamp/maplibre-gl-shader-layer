@@ -1,4 +1,3 @@
-
 import maplibregl, { type MapMouseEvent } from "maplibre-gl";
 import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
@@ -9,7 +8,6 @@ import {
   ColormapDescriptionLibrary,
 } from "../lib";
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-
 
 const seriesConfig = {
   temperature_2m: {
@@ -56,7 +54,7 @@ export async function weatherDemo(weatherVariableId: WeatherVariableId) {
 
   seriesSlider.min = seriesInfo.series[0].seriesAxisValue.toString();
   seriesSlider.max = seriesInfo.series[seriesInfo.series.length - 1].seriesAxisValue.toString();
-  
+
   let style = getStyle(seriesConfig[weatherVariableId].style, {
     pmtiles,
     sprite,

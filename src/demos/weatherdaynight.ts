@@ -1,4 +1,3 @@
-
 import maplibregl, { type MapMouseEvent } from "maplibre-gl";
 import { getStyle, setLayerOpacity, swapLayers } from "basemapkit";
 import { Protocol } from "pmtiles";
@@ -10,7 +9,6 @@ import {
   DaylightLayer,
 } from "../lib";
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-
 
 const seriesConfig = {
   temperature_2m: {
@@ -57,7 +55,7 @@ export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) 
 
   seriesSlider.min = seriesInfo.series[0].seriesAxisValue.toString();
   seriesSlider.max = seriesInfo.series[seriesInfo.series.length - 1].seriesAxisValue.toString();
-  
+
   let style = getStyle(seriesConfig[weatherVariableId].style, {
     pmtiles,
     sprite,
@@ -90,7 +88,7 @@ export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) 
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const daylightLayer = new DaylightLayer("daylight", {opacity: 0.9});
+  const daylightLayer = new DaylightLayer("daylight", { opacity: 0.9 });
   map.addLayer(daylightLayer, "earth_line");
 
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
@@ -124,7 +122,7 @@ export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) 
 
     daylightLayer.setDate(sliderDate);
     dateDisplay.innerText = dateStr;
-  }
+  };
 
   updateDisplay();
 
