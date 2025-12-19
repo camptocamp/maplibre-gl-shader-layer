@@ -3,7 +3,7 @@ import { getStyle } from "basemapkit";
 import { Protocol } from "pmtiles";
 
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-import { TextureTiledLayer } from "../lib";
+import { RemoteTextureTiledLayer } from "../lib";
 
 export async function simpletextureDemo() {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
@@ -45,7 +45,7 @@ export async function simpletextureDemo() {
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const layer = new TextureTiledLayer("texture-layer", {
+  const layer = new RemoteTextureTiledLayer("texture-layer", {
     textureUrlPattern: "/demo-tilesets/wind_speed_10m/2025-11-03T12:00:00Z/{z}/{x}/{y}.webp",
     minZoom: 0,
     maxZoom: 4,

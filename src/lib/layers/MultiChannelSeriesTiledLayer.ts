@@ -8,7 +8,7 @@ import { clamp, pickImg, wgs84ToTileIndex, type TileIndex } from "../core/tools"
 import type { Tile } from "../core/Tile";
 // @ts-ignore
 import fragmentShader from "../shaders/multi-channel-series-tile.f.glsl?raw";
-import type { Colormap } from "../core/colormap";
+import type { Colormap } from "../core/Colormap";
 import type { LngLat } from "maplibre-gl";
 import { RemoteTileTextureManager } from "../core/RemoteTileTextureManager";
 

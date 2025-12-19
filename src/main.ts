@@ -2,9 +2,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import { weatherDemo } from "./demos/weather";
 import { dummyDemo } from "./demos/dummy";
-import { weatherDayNightDemo } from "./demos/weatherdaynight";
-import { dayNightDemo } from "./demos/daynight";
-import { simpletextureDemo } from "./demos/simpletexture";
+import { weatherDaylightDemo } from "./demos/weatherdaylight";
+import { daylightDemo } from "./demos/daylight";
+import { simpletextureDemo } from "./demos/remotetexture";
+import { canvasTextureDemo } from "./demos/canvastexture";
 
 const demos = {
   dummy: () => {
@@ -16,10 +17,14 @@ const demos = {
   },
 
   "day-night": () => {
-    dayNightDemo();
+    daylightDemo();
   },
 
-  "simple-texture": () => {
+  "canvas-texture": () => {
+    canvasTextureDemo();
+  },
+
+  "remote-texture": () => {
     simpletextureDemo();
   },
 
@@ -32,11 +37,11 @@ const demos = {
   },
 
   "temperature-day-night": () => {
-    weatherDayNightDemo("temperature_2m");
+    weatherDaylightDemo("temperature_2m");
   },
 
   "windspeed-day-night": () => {
-    weatherDayNightDemo("wind_speed_10m");
+    weatherDaylightDemo("wind_speed_10m");
   },
 } as const;
 

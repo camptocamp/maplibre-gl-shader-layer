@@ -3,9 +3,9 @@ import { getStyle } from "basemapkit";
 import { Protocol } from "pmtiles";
 
 import { glyphs, lang, pmtiles, sprite } from "./constant";
-import { DaylightLayer } from "../lib";
+import { DaylightTiledLayer } from "../lib";
 
-export async function dayNightDemo() {
+export async function daylightDemo() {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -44,6 +44,6 @@ export async function dayNightDemo() {
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const layer = new DaylightLayer("daylight", { opacity: 0.7 });
+  const layer = new DaylightTiledLayer("daylight", { opacity: 0.7 });
   map.addLayer(layer);
 }

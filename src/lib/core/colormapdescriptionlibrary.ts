@@ -1,4 +1,4 @@
-import type { ColormapDescription } from "./colormap";
+import type { ColormapDescription } from "./Colormap";
 import turboColormapData from "../static/turbo-colormap-description.json";
 
 const presureBlueWhiteRed = [

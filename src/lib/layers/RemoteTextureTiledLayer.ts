@@ -11,7 +11,7 @@ import { RemoteTileTextureManager } from "../core/RemoteTileTextureManager";
 // @ts-ignore
 import fragmentShader from "../shaders/texture-tile.f.glsl?raw";
 
-export type TextureTiledLayerOptions = {
+export type RemoteTextureTiledLayerOptions = {
   minZoom?: number;
   maxZoom?: number;
   textureUrlPattern: string;
@@ -23,11 +23,11 @@ export type TextureTiledLayerOptions = {
   remoteTileTextureManager?: RemoteTileTextureManager;
 };
 
-export class TextureTiledLayer extends BaseShaderTiledLayer {
+export class RemoteTextureTiledLayer extends BaseShaderTiledLayer {
   private readonly textureUrlPattern: string;
   private readonly remoteTileTextureManager: RemoteTileTextureManager;
 
-  constructor(id: string, options: TextureTiledLayerOptions) {
+  constructor(id: string, options: RemoteTextureTiledLayerOptions) {
     super(id, {
       minZoom: options.minZoom ?? 0,
       maxZoom: options.maxZoom ?? 22,

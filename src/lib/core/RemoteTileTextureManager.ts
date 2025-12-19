@@ -2,7 +2,7 @@ import QuickLRU from "quick-lru";
 import { type Texture, TextureLoader } from "three";
 import { type TileIndex, wrapTileIndex } from "../core/tools";
 
-export type TextureManagerOptions = {
+export type RemoteTextureManagerOptions = {
   cacheSize?: number;
 };
 
@@ -12,7 +12,7 @@ export class RemoteTileTextureManager {
   private readonly textureLoader = new TextureLoader();
   private readonly textureInProgress = new Map<string, Texture>();
 
-  constructor(options: TextureManagerOptions = {}) {
+  constructor(options: RemoteTextureManagerOptions = {}) {
     const cacheSize = options.cacheSize ?? 10000;
 
     this.texturePool = new QuickLRU<string, Texture>({

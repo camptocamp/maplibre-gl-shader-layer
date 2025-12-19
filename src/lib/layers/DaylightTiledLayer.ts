@@ -9,7 +9,7 @@ import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import fragmentShader from "../shaders/daylight.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
 import type { Tile } from "../core/Tile";
-import { Colormap } from "../core/colormap";
+import { Colormap } from "../core/Colormap";
 
 export type DaylightLayerOptions = {
   date?: Date;
@@ -72,7 +72,7 @@ function computeSideralTimeComponent(day2YK: number): number {
   return RAD * (280.16 + 360.9856235 * day2YK);
 }
 
-export class DaylightLayer extends BaseShaderTiledLayer {
+export class DaylightTiledLayer extends BaseShaderTiledLayer {
   private date: Date;
 
   constructor(id: string, options: DaylightLayerOptions = {}) {

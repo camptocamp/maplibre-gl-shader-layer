@@ -23,6 +23,13 @@ export type TileUnwrappedPosition = {
   size: number;
 };
 
+/**
+ * Get a string ID from a given tile index
+ */
+export function tileIndexToString(tileIndex: TileIndex): string {
+  return `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
+}
+
 function mercatorToTileIndex(
   /**
    * Mercator coordinates (north-west is [0, 0], sourth-east is [1, 1])

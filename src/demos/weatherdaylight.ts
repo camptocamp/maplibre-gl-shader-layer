@@ -6,7 +6,7 @@ import {
   MultiChannelSeriesTiledLayer,
   type MultiChannelSeriesTiledLayerSpecification,
   ColormapDescriptionLibrary,
-  DaylightLayer,
+  DaylightTiledLayer,
 } from "../lib";
 import { glyphs, lang, pmtiles, sprite } from "./constant";
 
@@ -30,7 +30,7 @@ const seriesConfig = {
 
 type WeatherVariableId = keyof typeof seriesConfig;
 
-export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) {
+export async function weatherDaylightDemo(weatherVariableId: WeatherVariableId) {
   maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
   const container = document.getElementById("map");
@@ -88,7 +88,7 @@ export async function weatherDayNightDemo(weatherVariableId: WeatherVariableId) 
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const daylightLayer = new DaylightLayer("daylight", { opacity: 0.9 });
+  const daylightLayer = new DaylightTiledLayer("daylight", { opacity: 0.9 });
   map.addLayer(daylightLayer, "earth_line");
 
   const layer = new MultiChannelSeriesTiledLayer("custom-layer", {
