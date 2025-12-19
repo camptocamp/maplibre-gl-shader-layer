@@ -14,7 +14,7 @@ import { type TextureMaker, TileTextureManager } from "../core/TileTextureManage
 export type CanvasTextureTiledLayerOptions = {
   minZoom?: number;
   maxZoom?: number;
-  canvasMaker: (tileIndex: TileIndex) => HTMLCanvasElement;
+  canvasMaker: (tileIndex: TileIndex) => HTMLCanvasElement | OffscreenCanvas;
 };
 
 export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {

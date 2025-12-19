@@ -80,7 +80,9 @@ export async function canvasTextureDemo() {
 
   const layer = new CanvasTextureTiledLayer("canvas-layer", {
     canvasMaker: (tileIndex: TileIndex) => {
-      const canvas = document.createElement("canvas");
+      // This would equaly work with a regular HTML5 Canvas
+      // instantiated by document.createElement("canvas")
+      const canvas = new OffscreenCanvas(512, 512);
       canvas.width = 512;
       canvas.height = 512;
 
@@ -114,6 +116,7 @@ export async function canvasTextureDemo() {
       return canvas;
     },
   });
+
   map.addLayer(layer);
 
   // opacitySlider.addEventListener("input", () => {
