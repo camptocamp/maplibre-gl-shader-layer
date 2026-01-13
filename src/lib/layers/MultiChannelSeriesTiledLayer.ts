@@ -184,88 +184,9 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
   private readonly remoteTileTextureManager: RemoteTileTextureManager;
 
   constructor(id: string, options: MultiChannelSeriesTiledLayerOptions) {
-    console.log("options", options);
-
     super(id, {
       minZoom: options.datasetSpecification.minZoom,
       maxZoom: options.datasetSpecification.maxZoom,
-
-      onSetTileMaterial: (tileIndex: TileIndex) => {
-        const mapProjection = this.map.getProjection();
-        const material = new RawShaderMaterial({
-          // This automatically adds the top-level instruction:
-          // #version 300 es
-          glslVersion: GLSL3,
-
-          uniforms: {
-            opacity: { value: this.opacity },
-            texBefore: { value: null },
-            texAfter: { value: null },
-            seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
-            seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
-            seriesAxisValue: { value: this.seriesAxisValue },
-            zoom: { value: this.map.getZoom() },
-            tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
-            isGlobe: { value: mapProjection && mapProjection.type === "globe" },
-            rasterEncodingPolynomialSlope: { value: this.rasterEncoding.polynomialSlope },
-            rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
-            colormapRangeMin: { value: this.colormap.getRange().min },
-            colormapRangeMax: { value: this.colormap.getRange().max },
-            colormapTex: {
-              value: this.colormap.getTexture({
-                gradient: this.colormapGradient,
-                size: this.colormapGradient ? 512 : 4096,
-              }),
-            },
-            altitude: { value: this.altitude },
-          },
-          vertexShader: this.defaultVertexShader,
-          fragmentShader: fragmentShader,
-          side: BackSide,
-          transparent: true,
-          depthTest: false,
-          // wireframe: true,
-          defines: {
-            RASTER_ENCODING_CHANNELS: this.rasterEncoding.channels,
-            RASTER_ENCODING_NB_CHANNELS: this.rasterEncoding.channels.length,
-          },
-        });
-
-        return material;
-      },
-
-      onTileUpdate: async (tile: Tile, _matrix: Mat4) => {
-        // TODO: Add a signal to cancel the fetching of the texture in case the series axis moves too fast
-        // and needs to skip/jump further.
-
-        const texBeforeAfter = await Promise.allSettled([
-          this.remoteTileTextureManager.getTexture(
-            tile.getTileIndex(),
-            `${this.tileUrlPrefix}${this.seriesElementBefore.tileUrlPattern}`,
-          ),
-          this.remoteTileTextureManager.getTexture(
-            tile.getTileIndex(),
-            `${this.tileUrlPrefix}${this.seriesElementAfter.tileUrlPattern}`,
-          ),
-        ]);
-
-        const mapProjection = this.map.getProjection();
-        const tileIndeArray = tile.getTileIndexAsArray();
-        const material = tile.material as RawShaderMaterial;
-        const zoom = this.map.getZoom();
-        material.uniforms.opacity.value = this.opacity;
-        // At z12+, the globe is no longer globe in Maplibre
-        const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
-        material.uniforms.texBefore.value = texBeforeAfter[0].status === "fulfilled" ? texBeforeAfter[0].value : null;
-        material.uniforms.texAfter.value = texBeforeAfter[1].status === "fulfilled" ? texBeforeAfter[1].value : null;
-        material.uniforms.seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
-        material.uniforms.seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
-        material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
-        material.uniforms.zoom.value = zoom;
-        material.uniforms.isGlobe.value = isGlobe;
-        material.uniforms.altitude.value = this.altitude;
-        (material.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
-      },
     });
 
     this.colormapGradient = options.colormapGradient ?? true;
@@ -275,6 +196,83 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
     this.colormap = options.colormap;
     this.setSeriesAxisValue(options.seriesAxisValue ?? this.datasetSpecification.series[0].seriesAxisValue);
     this.remoteTileTextureManager = options.remoteTileTextureManager ?? new RemoteTileTextureManager();
+  }
+
+  onSetTileMaterial(tileIndex: TileIndex) {
+    const mapProjection = this.map.getProjection();
+    const material = new RawShaderMaterial({
+      // This automatically adds the top-level instruction:
+      // #version 300 es
+      glslVersion: GLSL3,
+
+      uniforms: {
+        opacity: { value: this.opacity },
+        texBefore: { value: null },
+        texAfter: { value: null },
+        seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
+        seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
+        seriesAxisValue: { value: this.seriesAxisValue },
+        zoom: { value: this.map.getZoom() },
+        tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
+        isGlobe: { value: mapProjection && mapProjection.type === "globe" },
+        rasterEncodingPolynomialSlope: { value: this.rasterEncoding.polynomialSlope },
+        rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
+        colormapRangeMin: { value: this.colormap.getRange().min },
+        colormapRangeMax: { value: this.colormap.getRange().max },
+        colormapTex: {
+          value: this.colormap.getTexture({
+            gradient: this.colormapGradient,
+            size: this.colormapGradient ? 512 : 4096,
+          }),
+        },
+        altitude: { value: this.altitude },
+      },
+      vertexShader: this.defaultVertexShader,
+      fragmentShader: fragmentShader,
+      side: BackSide,
+      transparent: true,
+      depthTest: false,
+      // wireframe: true,
+      defines: {
+        RASTER_ENCODING_CHANNELS: this.rasterEncoding.channels,
+        RASTER_ENCODING_NB_CHANNELS: this.rasterEncoding.channels.length,
+      },
+    });
+
+    return material;
+  }
+
+  async onTileUpdate(tile: Tile) {
+    // TODO: Add a signal to cancel the fetching of the texture in case the series axis moves too fast
+    // and needs to skip/jump further.
+
+    const texBeforeAfter = await Promise.allSettled([
+      this.remoteTileTextureManager.getTexture(
+        tile.getTileIndex(),
+        `${this.tileUrlPrefix}${this.seriesElementBefore.tileUrlPattern}`,
+      ),
+      this.remoteTileTextureManager.getTexture(
+        tile.getTileIndex(),
+        `${this.tileUrlPrefix}${this.seriesElementAfter.tileUrlPattern}`,
+      ),
+    ]);
+
+    const mapProjection = this.map.getProjection();
+    const tileIndeArray = tile.getTileIndexAsArray();
+    const material = tile.material as RawShaderMaterial;
+    const zoom = this.map.getZoom();
+    material.uniforms.opacity.value = this.opacity;
+    // At z12+, the globe is no longer globe in Maplibre
+    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
+    material.uniforms.texBefore.value = texBeforeAfter[0].status === "fulfilled" ? texBeforeAfter[0].value : null;
+    material.uniforms.texAfter.value = texBeforeAfter[1].status === "fulfilled" ? texBeforeAfter[1].value : null;
+    material.uniforms.seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
+    material.uniforms.seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
+    material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
+    material.uniforms.zoom.value = zoom;
+    material.uniforms.isGlobe.value = isGlobe;
+    material.uniforms.altitude.value = this.altitude;
+    (material.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
   }
 
   /**

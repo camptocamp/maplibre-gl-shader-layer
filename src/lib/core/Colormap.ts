@@ -2,7 +2,7 @@ import { CanvasTexture } from "three";
 import Color, { type ColorLike } from "color";
 
 export type ColormapDescription = (number | ColorLike)[];
-type RgbaArray = [number, number, number, number];
+export type RgbaArray = [number, number, number, number];
 const TRANSPARENT_BLACK: RgbaArray = [0, 0, 0, 0];
 
 type ColormapImageCreationOption = {

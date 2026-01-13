@@ -44,6 +44,6 @@ export async function daylightDemo() {
 
   await new Promise((resolve) => map.on("load", resolve));
 
-  const layer = new DaylightTiledLayer("daylight", { opacity: 0.7 });
+  const layer = new DaylightTiledLayer("daylight");
   map.addLayer(layer);
 }

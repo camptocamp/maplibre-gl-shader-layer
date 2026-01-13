@@ -49,16 +49,6 @@ export type Mat4 =
     ]
   | Float32Array;
 
-/**
- * Function to assign a material to a tile Mesh
- */
-type SetTileMaterialFunction = (tileIndex: TileIndex) => RawShaderMaterial;
-
-/**
- * Function to update the material of a tile Mesh.
- * The matrix is the one matrix provided by MapLibre
- */
-type UpdateTileMaterialFunction = (tile: Tile, matrix: Mat4) => void | Promise<void>;
 
 export type BaseShaderTiledLayerOptions = {
   /**
@@ -83,17 +73,7 @@ export type BaseShaderTiledLayerOptions = {
    * Beyond the maxZoom, tiles will show enlarged and possibly not great-looking
    * if too zoomed-in.
    */
-  showBeyondMaxZoom?: boolean;
-
-  /**
-   * Function to assign a material to a tile Mesh at the moment a new Tile instance needs to be created
-   */
-  onSetTileMaterial: SetTileMaterialFunction;
-
-  /**
-   * Function to update the material of a tile Mesh when a tile is rendered
-   */
-  onTileUpdate?: UpdateTileMaterialFunction;
+  showBeyondMaxZoom?: boolean;  
 
   tileZoomFitting?: TileZoomFitting;
 
@@ -103,7 +83,7 @@ export type BaseShaderTiledLayerOptions = {
   opacity?: number;
 };
 
-export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
+export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   public id: string;
   public readonly type = "custom";
   public renderingMode: "2d" | "3d" = "3d";
@@ -111,7 +91,6 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected renderer!: WebGLRenderer;
   protected camera!: Camera;
   protected scene!: Scene;
-  // protected tileContainer!: Object3D;
   protected debugMaterial!: MeshBasicMaterial;
   protected tileGeometry!: PlaneGeometry;
   protected minZoom: number;
@@ -122,26 +101,22 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
   protected tilePool: Tile[] = [];
   protected usedTileMap = new Map<string, Tile>();
   protected unusedTileList: Array<Tile> = [];
-  protected onSetTileMaterial: SetTileMaterialFunction;
-  protected onTileUpdate: UpdateTileMaterialFunction | null = null;
-  private tileZoomFittingFunction: (v: number) => number = Math.floor;
+  private readonly tileZoomFittingFunction: (v: number) => number = Math.floor;
   protected opacity = 1;
   protected altitude = 0;
   protected isVisible = true;
   protected readonly defaultVertexShader = defaultVertexShader;
 
-  constructor(id: string, options: BaseShaderTiledLayerOptions) {
+  constructor(id: string, options: BaseShaderTiledLayerOptions = {}) {
     this.id = id;
     this.initScene();
     this.minZoom = options.minZoom ?? 0;
     this.maxZoom = options.maxZoom ?? 22;
     this.showBelowMinZoom = options.showBelowMinZoom ?? false;
     this.showBeyondMaxZoom = options.showBeyondMaxZoom ?? true;
-    this.onSetTileMaterial = options.onSetTileMaterial;
-    this.onTileUpdate = options.onTileUpdate ?? null;
     this.opacity = Math.max(0, Math.min(options.opacity ?? 1, 1));
 
-    if (options && options.tileZoomFitting) {
+    if (options?.tileZoomFitting) {
       if (options.tileZoomFitting === "CEIL") {
         this.tileZoomFittingFunction = Math.ceil;
       } else if (options.tileZoomFitting === "ROUND") {
@@ -149,6 +124,16 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
       }
     }
   }
+
+  /**
+   * Method to assign a material to a tile Mesh at the moment a new Tile instance needs to be created
+   */
+  abstract onSetTileMaterial(tileIndex: TileIndex): RawShaderMaterial;
+
+  /**
+   * Method to update the material of a tile Mesh before a tile is rendered
+   */
+  abstract onTileUpdate(tile: Tile): void | Promise<void>;
 
   setVisible(v: boolean) {
     this.isVisible = v;
@@ -264,7 +249,7 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
         this.scene.add(tile);
 
         if (this.onTileUpdate) {
-          this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
+          this.onTileUpdate(tile);
         }
       } else {
         // This tile is not in the pool
@@ -292,7 +277,7 @@ export class BaseShaderTiledLayer implements maplibregl.CustomLayerInterface {
       this.scene.add(tile);
 
       if (this.onTileUpdate) {
-        this.onTileUpdate(tile, options.defaultProjectionData.mainMatrix as Mat4);
+        this.onTileUpdate(tile);
       }
     }
 

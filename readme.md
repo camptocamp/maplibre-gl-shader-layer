@@ -68,10 +68,20 @@ The class `BaseShaderTiledLayer` is designed to be extended and not to be used a
 
 ### `DummyGradientTiledLayer`
 The (DummyGradientTiledLayer)[src/lib/layers/DummyGradientTiledLayer.ts] is an example of how to extend `BaseShaderTiledLayer`. An actual demo can be found at [dummy.ts](src/demos/dummy.ts). 
-![dummy-demo](resources/screenshots/dummy.png)
+![dummy-demo](resources/screenshots/dummy.png)  
+This demo is minimalist as it only 
 
 
 ### `DaylightTiledLayer`
+The `DaylightTiledLayer` adds a day/night light parametric to a given `Date` instance if provided (otherwise it uses the curent data). A colormap can optionnaly be provided and is in function of the sun altitude angle in degree compared to horizon, where:
+- `-90` is the sun position at nadir (the maximum below the horizon, the most night that night can be)
+- `0` is exactely at the level of horizon
+- `90`is the sun position at zenith, the highest position in the sky
+
+The color maps does not have to cover the whole [-90, 90] interval and could only cover a range of interest [-5, 5] that would cover the transition from day to night.  
+
+![daylight-demo](resources/screenshots/daylight.png) 
+A usage example of `DaylightTiledLayer` can be found in [daylight.ts](src/demos/daylight.ts).
 
 ### `RemoteTextureTiledLayer`
 
