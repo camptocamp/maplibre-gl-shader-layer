@@ -44,6 +44,11 @@ export class Colormap {
     );
   }
 
+  /**
+   * Get the RGBa color for a given value.
+   * With `gradient` set to `true`(default), the colors are interpolated.
+   * If `false`, the color is strictly as provided in the description.
+   */
   getRgbColorAt(value: number, gradient = true): RgbaArray {
     if (value <= this.minValue) {
       return this.rgbColors[0];

@@ -30,6 +30,9 @@ export function tileIndexToString(tileIndex: TileIndex): string {
   return `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 }
 
+/**
+ * Given a mercator coordinates and a zoom level, get a tile index
+ */
 function mercatorToTileIndex(
   /**
    * Mercator coordinates (north-west is [0, 0], sourth-east is [1, 1])
@@ -60,13 +63,16 @@ function mercatorToTileIndex(
   return tileIndex;
 }
 
+/**
+ * Given a wgs84 coordinate and a zoom level, get a tile index
+ */
 export function wgs84ToTileIndex(position: LngLat, zoom: number, strict = true): TileIndex {
   const merCoord = MercatorCoordinate.fromLngLat(position);
   return mercatorToTileIndex([merCoord.x, merCoord.y], zoom, strict);
 }
 
 /**
- * Get the tile index
+ * Get the tile index (unwrapped) bounds for a given Maplibre map view
  */
 export function getTileBoundsUnwrapped(map: maplibregl.Map, z: number): TileBoundsUnwrapped {
   const bounds = map.getBounds();
@@ -98,6 +104,9 @@ export function getTileBoundsUnwrapped(map: maplibregl.Map, z: number): TileBoun
   };
 }
 
+/**
+ * Get the list of tile (unwrapped) from a given tile bounds
+ */
 export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileIndex[] {
   const allTileIndices: TileIndex[] = [];
   const z = tbu.min.z;
@@ -110,6 +119,9 @@ export function tileBoundsUnwrappedToTileList(tbu: TileBoundsUnwrapped): TileInd
   return allTileIndices;
 }
 
+/**
+ * Get the mercator position of the center of a given tile
+ */
 export function tileIndexToMercatorPosition(ti: TileIndex): TileUnwrappedPosition {
   const size = 1 / 2 ** ti.z;
   const centerX = (ti.x + 0.5) * size;
@@ -120,6 +132,9 @@ export function tileIndexToMercatorPosition(ti: TileIndex): TileUnwrappedPositio
   };
 }
 
+/**
+ * Wrap a tile index
+ */
 export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
   const nbTilePerAxis = 2 ** tileIndex.z;
   let x = tileIndex.x % nbTilePerAxis;
@@ -133,6 +148,9 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
   } as TileIndex;
 }
 
+/**
+ * Given a tile index, get the mercator tile size 
+ */
 function tileIndexToMercatorCenterAndSize(ti: TileIndex): {
   mercCenter: maplibregl.MercatorCoordinate;
   mercSize: number;
@@ -228,20 +246,6 @@ export function isTileInViewport(
   return false;
 }
 
-export function tileBoundsUnwrappedToTileList2(map: maplibregl.Map): TileIndex[] {
-  return (
-    map
-      .coveringTiles({ tileSize: 512 })
-      // .filter(el => el.overscaledZ === zoom)
-      .map((el) => {
-        return {
-          z: el.canonical.z,
-          x: el.canonical.x,
-          y: el.canonical.y,
-        } as TileIndex;
-      })
-  );
-}
 
 /**
  * Modulo function, as opposed to javascript's `%`, which is a remainder.
