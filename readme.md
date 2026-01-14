@@ -84,9 +84,24 @@ The color maps does not have to cover the whole [-90, 90] interval and could onl
 A usage example of `DaylightTiledLayer` can be found in [daylight.ts](src/demos/daylight.ts).
 
 ### `RemoteTextureTiledLayer`
+An instance of `RemoteTextureTiledLayer` is just adding a raster tiled layer, with tiled fetch from a URL pattern like `https://example.com/{z}/{x}/{y}.png`.  
+Since this kind of feature is already well supported in Maplibre, this layer is rather for demo purposes on how to create a new type of layer that leverages a `RemoteTileTextureManager`. So, consider it more like learning material.
+![remote-tile-layer](resources/screenshots/remote-tile.png)
+Look at the source of [RemoteTextureTiledLayer.ts](src/lib/layers/RemoteTextureTiledLayer.ts).
 
 ### `CanvasTextureTiledLayer`
+An instance of `CanvasTextureTiledLayer` opens the possibility to provide a canvas to each tile. The contructor takes an options named `canvasMaker`, a function with the signature:
+```ts
+(tileIndex: TileIndex) => Promise<HTMLCanvasElement | OffscreenCanvas>;
+```
+It takes a tile index (`{z: number, x: number, y: number}`) and spits out a Promise to a canvas or OffscreenCanvas instance. Internally, the call to the canvasMaker function is awaited to provide a greater flexibility.
+
+![canvas-tile-layer](resources/screenshots/canvas-tiles.png)
+Look into [this demo](src/demos/canvastexture.ts) to see how `CanvasTextureTiledLayer`is being used.
 
 ### `MultiChannelSeriesTiledLayer`
+
+
+![multichan-layer](resources/screenshots/multichan.png)
 
 ## Implement your own tiled layer

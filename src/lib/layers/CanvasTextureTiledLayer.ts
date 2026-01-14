@@ -14,7 +14,7 @@ import { type TextureMaker, TileTextureManager } from "../core/TileTextureManage
 export type CanvasTextureTiledLayerOptions = {
   minZoom?: number;
   maxZoom?: number;
-  canvasMaker: (tileIndex: TileIndex) => HTMLCanvasElement | OffscreenCanvas;
+  canvasMaker: (tileIndex: TileIndex) => Promise<HTMLCanvasElement | OffscreenCanvas>;
 };
 
 export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
@@ -31,7 +31,7 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
     });
 
     this.textureMaker = async (tileIndex: TileIndex) => {
-      const canvas = canvasMaker(tileIndex);
+      const canvas = await canvasMaker(tileIndex);
       return new CanvasTexture(canvas);
     };
 
