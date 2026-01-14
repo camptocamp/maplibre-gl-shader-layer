@@ -4,7 +4,7 @@
  */
 
 import { RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import type { TileIndex } from "../core/tools";
 import type { Tile } from "../core/Tile";
 import { RemoteTileTextureManager } from "../core/RemoteTileTextureManager";

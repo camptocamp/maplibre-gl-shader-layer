@@ -49,7 +49,6 @@ export type Mat4 =
     ]
   | Float32Array;
 
-
 export type BaseShaderTiledLayerOptions = {
   /**
    * Default: 0
@@ -73,7 +72,7 @@ export type BaseShaderTiledLayerOptions = {
    * Beyond the maxZoom, tiles will show enlarged and possibly not great-looking
    * if too zoomed-in.
    */
-  showBeyondMaxZoom?: boolean;  
+  showBeyondMaxZoom?: boolean;
 
   tileZoomFitting?: TileZoomFitting;
 

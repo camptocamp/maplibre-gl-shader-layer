@@ -11,7 +11,7 @@ import fragmentShader from "../shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
 import type { Tile } from "../core/Tile";
 
-export type DummyGradientTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, 'BaseShaderTiledLayerOptions' >;
+export type DummyGradientTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, "BaseShaderTiledLayerOptions">;
 
 export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
   constructor(id: string, options: DummyGradientTiledLayerOptions = {}) {
@@ -42,7 +42,6 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
 
     return material;
   }
-
 
   onTileUpdate(tile: Tile) {
     (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();

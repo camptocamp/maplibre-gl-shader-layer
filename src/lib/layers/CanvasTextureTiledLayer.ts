@@ -4,7 +4,7 @@
  */
 
 import { RawShaderMaterial, GLSL3, Vector3, BackSide, CanvasTexture } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import type { TileIndex } from "../core/tools";
 import type { Tile } from "../core/Tile";
 // @ts-ignore
@@ -23,7 +23,6 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
 
   constructor(id: string, options: CanvasTextureTiledLayerOptions) {
     const canvasMaker = options.canvasMaker;
-    
 
     super(id, {
       minZoom: options.minZoom ?? 0,
@@ -37,7 +36,6 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
 
     this.tileTextureManager = new TileTextureManager();
   }
-
 
   onSetTileMaterial(tileIndex: TileIndex) {
     const mapProjection = this.map.getProjection();

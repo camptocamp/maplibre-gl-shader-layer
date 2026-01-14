@@ -149,7 +149,7 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
 }
 
 /**
- * Given a tile index, get the mercator tile size 
+ * Given a tile index, get the mercator tile size
  */
 function tileIndexToMercatorCenterAndSize(ti: TileIndex): {
   mercCenter: maplibregl.MercatorCoordinate;
@@ -245,7 +245,6 @@ export function isTileInViewport(
 
   return false;
 }
-
 
 /**
  * Modulo function, as opposed to javascript's `%`, which is a remainder.

@@ -4,7 +4,7 @@
  */
 
 import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 // @ts-ignore
 import fragmentShader from "../shaders/daylight.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
@@ -28,7 +28,7 @@ export type DaylightLayerOptions = {
    * is below, `0` is at horizon level and positive is above the horizon. The values
    * used for the default colormap are -20, -10, 0 and 10.
    */
-  colormap?: Colormap,
+  colormap?: Colormap;
 };
 
 // The following sun calculation are borrowef from Volodymyr Agafonkin's Suncalc library:
@@ -95,16 +95,18 @@ export class DaylightTiledLayer extends BaseShaderTiledLayer {
     super(id, options);
     this.date = options.date ?? new Date();
 
-    this.colormap = options.colormap ?? Colormap.fromColormapDescription([
-      -20,
-      "rgba(9, 14, 31, 0.6)",
-      -1.5,
-      "rgba(9, 14, 31, 0.6)",
-      0,
-      "rgba(9, 14, 31, 0.0)",
-      10,
-      "rgba(9, 14, 31, 0.0)",
-    ]);
+    this.colormap =
+      options.colormap ??
+      Colormap.fromColormapDescription([
+        -20,
+        "rgba(9, 14, 31, 0.6)",
+        -1.5,
+        "rgba(9, 14, 31, 0.6)",
+        0,
+        "rgba(9, 14, 31, 0.0)",
+        10,
+        "rgba(9, 14, 31, 0.0)",
+      ]);
 
     if (options.opacity) {
       this.setOpacity(options.opacity);

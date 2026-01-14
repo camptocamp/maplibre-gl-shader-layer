@@ -3,7 +3,7 @@
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
 import { RawShaderMaterial, GLSL3, Vector3, BackSide } from "three";
-import { type Mat4, BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
+import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import { clamp, pickImg, wgs84ToTileIndex, type TileIndex } from "../core/tools";
 import type { Tile } from "../core/Tile";
 // @ts-ignore

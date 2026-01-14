@@ -79,7 +79,7 @@ export async function canvasTextureDemo() {
   ];
 
   const layer = new CanvasTextureTiledLayer("canvas-layer", {
-    canvasMaker: (tileIndex: TileIndex) => {
+    canvasMaker: async (tileIndex: TileIndex) => {
       // This would equaly work with a regular HTML5 Canvas
       // instantiated by document.createElement("canvas")
       const canvas = new OffscreenCanvas(512, 512);

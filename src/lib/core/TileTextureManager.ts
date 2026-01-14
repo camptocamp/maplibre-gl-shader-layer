@@ -1,5 +1,5 @@
 import QuickLRU from "quick-lru";
-import { type Texture, TextureLoader } from "three";
+import { type Texture } from "three";
 import { type TileIndex, tileIndexToString, wrapTileIndex } from "../core/tools";
 
 export type TileTextureManagerOptions = {
