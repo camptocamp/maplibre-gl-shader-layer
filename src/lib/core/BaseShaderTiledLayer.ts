@@ -4,9 +4,13 @@ import {
   Matrix4,
   type MeshBasicMaterial,
   PlaneGeometry,
+  RawShaderMaterial,
   Scene,
   WebGLRenderer,
-  type RawShaderMaterial,
+  ShaderMaterialParameters,
+  GLSL3,
+  Vector3,
+  BackSide,
 } from "three";
 import {
   type TileIndex,
@@ -125,14 +129,14 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
   }
 
   /**
-   * Method to assign a material to a tile Mesh at the moment a new Tile instance needs to be created
+   * Method to assign ThreeJS ShaderMaterialParameters to the internaly created RawShaderMaterial
    */
-  abstract onSetTileMaterial(tileIndex: TileIndex): RawShaderMaterial;
+  protected abstract onSetTileShaderParameters(tileIndex: TileIndex): ShaderMaterialParameters;
 
   /**
    * Method to update the material of a tile Mesh before a tile is rendered
    */
-  abstract onTileUpdate(tile: Tile): void | Promise<void>;
+  protected abstract onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial): void | Promise<void>;
 
   setVisible(v: boolean) {
     this.isVisible = v;
@@ -234,6 +238,11 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     const usedTileMapPrevious = this.usedTileMap;
     const usedTileMapNew = new Map<string, Tile>();
 
+    const mapProjection = this.map.getProjection();
+    const zoom = this.map.getZoom();
+    // At z12+, the globe is no longer globe in Maplibre
+    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
+
     for (const element of allTileIndices) {
       const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
@@ -247,9 +256,8 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
         usedTileMapPrevious.delete(tileID);
         this.scene.add(tile);
 
-        if (this.onTileUpdate) {
-          this.onTileUpdate(tile);
-        }
+        this.updateTileMaterial(tile, zoom, isGlobe);
+        
       } else {
         // This tile is not in the pool
         tilesToAdd.push(tileIndex);
@@ -266,8 +274,33 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
 
       if (this.unusedTileList.length > 0) {
         tile = this.unusedTileList.pop() as Tile;
-      } else {
-        const material = this.onSetTileMaterial(tileIndex);
+      } else {        
+        const mapProjection = this.map.getProjection();
+        const providedShaderMaterialParameters: ShaderMaterialParameters = this.onSetTileShaderParameters(tileIndex)
+        const shaderMaterialParameters: ShaderMaterialParameters = {
+          // Param that are allowed to be overwritten
+          side: BackSide,
+          transparent: true,
+          depthTest: false,
+          
+          ...providedShaderMaterialParameters,
+
+          // Mandatory params
+          vertexShader: this.defaultVertexShader,
+          glslVersion: GLSL3,
+        };
+
+        shaderMaterialParameters.uniforms = {
+          ...shaderMaterialParameters.uniforms,
+
+          // Mandatory uniforms
+          zoom: { value: this.map.getZoom() },
+          tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
+          isGlobe: { value: mapProjection && mapProjection.type === "globe" },
+          opacity: { value: this.opacity },
+        };
+
+        const material = new RawShaderMaterial(shaderMaterialParameters);
         tile = new Tile(this.tileGeometry, material);
       }
 
@@ -275,9 +308,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
       tile.setTileIndex(tileIndex);
       this.scene.add(tile);
 
-      if (this.onTileUpdate) {
-        this.onTileUpdate(tile);
-      }
+      this.updateTileMaterial(tile, zoom, isGlobe);
     }
 
     this.usedTileMap = usedTileMapNew;
@@ -286,6 +317,18 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private async updateTileMaterial(tile: Tile, zoom: number, isGlobe: boolean) {
+    const tileRawMaterial = tile.material as RawShaderMaterial;
+    await this.onTileUpdate(tile.getTileIndex(), tileRawMaterial);
+
+    // Update built-in uniforms
+    const tileIndeArray = tile.getTileIndexAsArray();
+    tileRawMaterial.uniforms.zoom.value = zoom;
+    tileRawMaterial.uniforms.isGlobe.value = isGlobe;
+    tileRawMaterial.uniforms.opacity.value = this.opacity;
+    (tileRawMaterial.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
   }
 
   setOpacity(opacity: number) {
