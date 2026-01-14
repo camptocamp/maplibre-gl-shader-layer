@@ -34,6 +34,9 @@
         }
       },
       "complexity": {
+        "noForEach": {
+          "level": "off"
+        },
         "noUselessTernary": {
           "level": "off"
         },

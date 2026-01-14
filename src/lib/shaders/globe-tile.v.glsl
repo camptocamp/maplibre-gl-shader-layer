@@ -2,11 +2,13 @@ precision highp float;
 precision highp int;
 
 #define PI 3.14159265359
+#define EARTH_RADIUS 6371008.8
 
 uniform mat4 modelViewMatrix; // optional
 uniform mat4 projectionMatrix; // optional
 uniform vec3 tileIndex; // tile index
 uniform bool isGlobe;
+uniform float altitude;
 
 // Both position and vPosition are in [-0.5., 0.5.]
 in vec3 position;
@@ -41,17 +43,22 @@ vec3 projectTileCoordinatesToSphere(vec2 uv, vec3 tileIndex, out vec2 lonLat) {
   float sphericalX = mod(mercator.x * PI * 2.0 + PI, PI * 2.0);
   float sphericalY = 2.0 * atan(exp(PI - (mercator.y * PI * 2.0))) - PI * 0.5;
   float len = cos(sphericalY);
+
+  // Add a small offset to make the vertices float above the surface
+  float altitudeUnit = altitude / EARTH_RADIUS;
   return vec3(
-    sin(sphericalX) * len,
-    sin(sphericalY),
-    cos(sphericalX) * len
+    sin(sphericalX) * len * (1.0 + altitudeUnit),
+    sin(sphericalY) * (1.0 + altitudeUnit),
+    cos(sphericalX) * len * (1.0 + altitudeUnit)
   );
 }
 
 vec3 projectTileCoordinatesToMercator(vec2 uv, vec3 tileIndex, out vec2 lonLat) {
   vec2 mercator = getMercatorCoords(uv, tileIndex);
   lonLat = mercatorToLonLat(mercator);
-  return vec3(mercator.x, mercator.y, 0.);
+  // Add a small offset to make the vertices float above the surface
+  float altitudeUnit =  altitude / EARTH_RADIUS / (2. * PI);
+  return vec3(mercator.x, mercator.y, altitudeUnit);
 }
 
 void main()	{

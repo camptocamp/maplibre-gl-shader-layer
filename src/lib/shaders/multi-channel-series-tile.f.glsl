@@ -108,7 +108,9 @@ void main()  {
   float realWorldValueAfter = getRealWorldValue(texAfter, texAfterIsNodata);
 
   if (texBeforeIsNodata || texAfterIsNodata) {
+    // fragColor = vec4(1., 0., 0., 0.3);
     discard;
+    return;
   }
 
   float ratioAfter = seriesAxisValueAfter == seriesAxisValueBefore ? 0.0 : (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);

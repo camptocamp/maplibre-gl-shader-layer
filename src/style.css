@@ -69,3 +69,34 @@ body {
   filter: drop-shadow(0px 0px 10px #ffffff);
   margin-left: 10px;
 }
+
+#demo-list {
+  z-index: 2;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin-bottom: 50px;
+  margin-right: 12px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+
+#demo-list a {
+  width: 250px;
+  font-family: sans-serif;
+  font-size: 20px;
+  text-align: center;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: #555;
+  background-color: #ffffff;
+  border-radius: 4px;
+  filter: drop-shadow(0 0 10px #00000054);
+}
+
+#demo-list a.selected-demo {
+  background-color: #0077c7;
+  color: #FFF;
+  font-weight: 600;
+}
