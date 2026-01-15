@@ -298,6 +298,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
           tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
           isGlobe: { value: mapProjection && mapProjection.type === "globe" },
           opacity: { value: this.opacity },
+          altitude: { value: this.altitude },
         };
 
         const material = new RawShaderMaterial(shaderMaterialParameters);
@@ -329,6 +330,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     tileRawMaterial.uniforms.isGlobe.value = isGlobe;
     tileRawMaterial.uniforms.opacity.value = this.opacity;
     (tileRawMaterial.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+    tileRawMaterial.uniforms.altitude.value = this.altitude;
   }
 
   setOpacity(opacity: number) {

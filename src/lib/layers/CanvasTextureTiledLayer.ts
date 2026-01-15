@@ -37,6 +37,7 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
     this.tileTextureManager = new TileTextureManager();
   }
 
+  // Must be implemented
   protected onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       uniforms: {
@@ -46,7 +47,8 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
     }
   }
 
-  protected async onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial) {
+  // Must be implemented
+  async onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial) {
     material.uniforms.tex.value = await this.tileTextureManager.getTexture(tileIndex, this.textureMaker);
   }
 }
