@@ -11,6 +11,7 @@ import {
   GLSL3,
   Vector3,
   BackSide,
+  DoubleSide,
 } from "three";
 import {
   type TileIndex,
@@ -18,11 +19,15 @@ import {
   tileBoundsUnwrappedToTileList,
   isTileInViewport,
   wrapTileIndex,
+  tileIndexToMercatorPosition,
+  tileIndexToMercatorCenterAndSize,
+  calculateDistanceMercatorToMeters,
 } from "./tools";
 import { Tile } from "./Tile";
 
 // @ts-ignore
-import defaultVertexShader from "../shaders/globe-tile.v.glsl?raw";
+import defaultVertexShader from "../shaders/tile.v.glsl?raw";
+import { LngLat, MercatorCoordinate } from "maplibre-gl";
 
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
@@ -243,12 +248,34 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     // At z12+, the globe is no longer globe in Maplibre
     const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
 
+    // From z14+ the tile positioning is computed as relative to the center of the map 
+    const relativeTilePosition = zoom >= 14;
+
+    this.camera.matrixWorldAutoUpdate = false;
+    const sceneOriginMercator = MercatorCoordinate.fromLngLat(this.map.getCenter(), 0);
+
     for (const element of allTileIndices) {
       const tileIndex = element;
       const tileID = `${tileIndex.z}_${tileIndex.x}_${tileIndex.y}`;
 
       const tile = usedTileMapPrevious.get(tileID);
       if (tile) {
+
+        if (relativeTilePosition) {
+          const {mercSize, mercCenter} = tileIndexToMercatorCenterAndSize(tileIndex);
+          const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
+          const tileSizeMeters = (mercSize / mercUnitsPerMeter);
+          const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
+          const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
+          tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
+          tile.position.set(easting, -northing, 0);
+          tile.rotation.set(Math.PI, 0, 0);
+        } else {
+          tile.position.set(0, 0, 0);
+          tile.scale.set(1, 1, 1);
+          tile.rotation.set(0, 0, 0);
+        }
+        
         // This tile is already in the pool
         usedTileMapNew.set(tileID, tile);
 
@@ -256,7 +283,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
         usedTileMapPrevious.delete(tileID);
         this.scene.add(tile);
 
-        this.updateTileMaterial(tile, zoom, isGlobe);
+        this.updateTileMaterial(tile, zoom, isGlobe, relativeTilePosition);
         
       } else {
         // This tile is not in the pool
@@ -299,28 +326,55 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
           isGlobe: { value: mapProjection && mapProjection.type === "globe" },
           opacity: { value: this.opacity },
           altitude: { value: this.altitude },
+          relativeTilePosition: { value: relativeTilePosition },
         };
 
         const material = new RawShaderMaterial(shaderMaterialParameters);
         tile = new Tile(this.tileGeometry, material);
       }
 
+      if (relativeTilePosition) {
+        const {mercSize, mercCenter} = tileIndexToMercatorCenterAndSize(tileIndex);
+        const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
+        const tileSizeMeters = mercSize / mercUnitsPerMeter;
+        const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
+        const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
+        tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
+        tile.position.set(easting, -northing, 0);
+        tile.rotation.set(Math.PI, 0, 0);
+      } else {
+        tile.position.set(0, 0, 0);
+        tile.scale.set(1, 1, 1);
+        tile.rotation.set(0, 0, 0);
+      }
+
       usedTileMapNew.set(tileID, tile);
       tile.setTileIndex(tileIndex);
       this.scene.add(tile);
-
-      this.updateTileMaterial(tile, zoom, isGlobe);
+      this.updateTileMaterial(tile, zoom, isGlobe, relativeTilePosition);
     }
 
     this.usedTileMap = usedTileMapNew;
 
-    // Actual rendering
-    this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
-    this.renderer.resetState();
-    this.renderer.render(this.scene, this.camera);
+    if (relativeTilePosition) {
+      const sceneScale = sceneOriginMercator.meterInMercatorCoordinateUnits();
+      const m = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
+      const l = new Matrix4()
+        .makeTranslation(sceneOriginMercator.x, sceneOriginMercator.y, sceneOriginMercator.z)
+        .scale(new Vector3(sceneScale, -sceneScale, sceneScale));
+
+      this.camera.projectionMatrix = m.multiply(l);
+      this.renderer.resetState();
+      this.renderer.render(this.scene, this.camera);
+
+    } else {
+      this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
+      this.renderer.resetState();
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
-  private async updateTileMaterial(tile: Tile, zoom: number, isGlobe: boolean) {
+  private async updateTileMaterial(tile: Tile, zoom: number, isGlobe: boolean, relativeTilePosition: boolean) {
     const tileRawMaterial = tile.material as RawShaderMaterial;
     await this.onTileUpdate(tile.getTileIndex(), tileRawMaterial);
 
@@ -331,6 +385,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     tileRawMaterial.uniforms.opacity.value = this.opacity;
     (tileRawMaterial.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
     tileRawMaterial.uniforms.altitude.value = this.altitude;
+    tileRawMaterial.uniforms.relativeTilePosition.value = relativeTilePosition
   }
 
   setOpacity(opacity: number) {

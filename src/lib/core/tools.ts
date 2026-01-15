@@ -151,7 +151,7 @@ export function wrapTileIndex(tileIndex: TileIndex): TileIndex {
 /**
  * Given a tile index, get the mercator tile size
  */
-function tileIndexToMercatorCenterAndSize(ti: TileIndex): {
+export function tileIndexToMercatorCenterAndSize(ti: TileIndex): {
   mercCenter: maplibregl.MercatorCoordinate;
   mercSize: number;
 } {

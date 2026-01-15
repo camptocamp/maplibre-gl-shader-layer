@@ -8,6 +8,7 @@ uniform mat4 modelViewMatrix; // optional
 uniform mat4 projectionMatrix; // optional
 uniform vec3 tileIndex; // tile index
 uniform bool isGlobe;
+uniform bool relativeTilePosition;
 uniform float altitude;
 
 // Both position and vPosition are in [-0.5., 0.5.]
@@ -63,13 +64,22 @@ vec3 projectTileCoordinatesToMercator(vec2 uv, vec3 tileIndex, out vec2 lonLat) 
 
 void main()	{
   vPositionUnit = position.xy + 0.5;
-  vec2 lonLat;
- 
-  // Place the vertices of the tile planes (subdivided in many triangles)
-  // directly in shader using the UV from ThreeJS
-  vec3 worldPos = isGlobe ? projectTileCoordinatesToSphere(uv, tileIndex, lonLat) : projectTileCoordinatesToMercator(uv, tileIndex, lonLat);
-  vLonLat = lonLat;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( worldPos, 1.0 );
+
+  if (relativeTilePosition) {
+    // vPositionUnit.y = 1. - vPositionUnit.y;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    // TODO: add vLonLat
+  } else {
+    
+    vec2 lonLat;
+  
+    // Place the vertices of the tile planes (subdivided in many triangles)
+    // directly in shader using the UV from ThreeJS
+    vec3 worldPos = isGlobe ? projectTileCoordinatesToSphere(uv, tileIndex, lonLat) : projectTileCoordinatesToMercator(uv, tileIndex, lonLat);
+    vLonLat = lonLat;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( worldPos, 1.0 );
+  }
+
 }
 
 

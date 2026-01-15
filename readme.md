@@ -61,8 +61,6 @@ The class `BaseShaderTiledLayer` is the one to inherit from when creating a new 
 - instanciate a proper layer, following the Maplibre GL JS recommandations
 - hook the proper rendering functions to sync with Maplibre
 
-In addition, it loads the default vertex shader that is compatible with both the globe and Mercator projections. Note that the library does not force you to use this specific shader and that you can write your own, based or not on `src/lib/shaders/globe-tile.v.glsl`.
-
 The class `BaseShaderTiledLayer` is designed to be extended and not to be used as is. The simplest example of an extension would be (DummyGradientTiledLayer)[src/lib/layers/DummyGradientTiledLayer.ts].
 
 
