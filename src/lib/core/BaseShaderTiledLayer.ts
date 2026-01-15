@@ -1,4 +1,4 @@
-import type maplibregl from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import {
   Camera,
   Matrix4,
@@ -7,11 +7,10 @@ import {
   RawShaderMaterial,
   Scene,
   WebGLRenderer,
-  ShaderMaterialParameters,
+  type ShaderMaterialParameters,
   GLSL3,
   Vector3,
   BackSide,
-  DoubleSide,
 } from "three";
 import {
   type TileIndex,
@@ -19,15 +18,12 @@ import {
   tileBoundsUnwrappedToTileList,
   isTileInViewport,
   wrapTileIndex,
-  tileIndexToMercatorPosition,
   tileIndexToMercatorCenterAndSize,
-  calculateDistanceMercatorToMeters,
 } from "./tools";
 import { Tile } from "./Tile";
 
 // @ts-ignore
 import defaultVertexShader from "../shaders/tile.v.glsl?raw";
-import { LngLat, MercatorCoordinate } from "maplibre-gl";
 
 /**
  * Tile stategy to change (integer) zoom level depending on ramping map zoom level.
@@ -248,11 +244,11 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     // At z12+, the globe is no longer globe in Maplibre
     const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
 
-    // From z14+ the tile positioning is computed as relative to the center of the map 
+    // From z14+ the tile positioning is computed as relative to the center of the map
     const relativeTilePosition = zoom >= 14;
 
     this.camera.matrixWorldAutoUpdate = false;
-    const sceneOriginMercator = MercatorCoordinate.fromLngLat(this.map.getCenter(), 0);
+    const sceneOriginMercator = maplibregl.MercatorCoordinate.fromLngLat(this.map.getCenter(), 0);
 
     for (const element of allTileIndices) {
       const tileIndex = element;
@@ -260,11 +256,10 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
 
       const tile = usedTileMapPrevious.get(tileID);
       if (tile) {
-
         if (relativeTilePosition) {
-          const {mercSize, mercCenter} = tileIndexToMercatorCenterAndSize(tileIndex);
+          const { mercSize, mercCenter } = tileIndexToMercatorCenterAndSize(tileIndex);
           const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
-          const tileSizeMeters = (mercSize / mercUnitsPerMeter);
+          const tileSizeMeters = mercSize / mercUnitsPerMeter;
           const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
           const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
           tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
@@ -275,7 +270,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
           tile.scale.set(1, 1, 1);
           tile.rotation.set(0, 0, 0);
         }
-        
+
         // This tile is already in the pool
         usedTileMapNew.set(tileID, tile);
 
@@ -284,7 +279,6 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
         this.scene.add(tile);
 
         this.updateTileMaterial(tile, zoom, isGlobe, relativeTilePosition);
-        
       } else {
         // This tile is not in the pool
         tilesToAdd.push(tileIndex);
@@ -301,15 +295,15 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
 
       if (this.unusedTileList.length > 0) {
         tile = this.unusedTileList.pop() as Tile;
-      } else {        
+      } else {
         const mapProjection = this.map.getProjection();
-        const providedShaderMaterialParameters: ShaderMaterialParameters = this.onSetTileShaderParameters(tileIndex)
+        const providedShaderMaterialParameters: ShaderMaterialParameters = this.onSetTileShaderParameters(tileIndex);
         const shaderMaterialParameters: ShaderMaterialParameters = {
           // Param that are allowed to be overwritten
           side: BackSide,
           transparent: true,
           depthTest: false,
-          
+
           ...providedShaderMaterialParameters,
 
           // Mandatory params
@@ -334,7 +328,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
       }
 
       if (relativeTilePosition) {
-        const {mercSize, mercCenter} = tileIndexToMercatorCenterAndSize(tileIndex);
+        const { mercSize, mercCenter } = tileIndexToMercatorCenterAndSize(tileIndex);
         const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
         const tileSizeMeters = mercSize / mercUnitsPerMeter;
         const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
@@ -366,7 +360,6 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
       this.camera.projectionMatrix = m.multiply(l);
       this.renderer.resetState();
       this.renderer.render(this.scene, this.camera);
-
     } else {
       this.camera.projectionMatrix = new Matrix4().fromArray(options.defaultProjectionData.mainMatrix);
       this.renderer.resetState();
@@ -385,7 +378,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     tileRawMaterial.uniforms.opacity.value = this.opacity;
     (tileRawMaterial.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
     tileRawMaterial.uniforms.altitude.value = this.altitude;
-    tileRawMaterial.uniforms.relativeTilePosition.value = relativeTilePosition
+    tileRawMaterial.uniforms.relativeTilePosition.value = relativeTilePosition;
   }
 
   setOpacity(opacity: number) {

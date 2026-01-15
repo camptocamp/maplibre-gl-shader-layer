@@ -3,10 +3,9 @@
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
 
-import { RawShaderMaterial, GLSL3, Vector3, BackSide, CanvasTexture, ShaderMaterialParameters } from "three";
+import { type RawShaderMaterial, CanvasTexture, type ShaderMaterialParameters } from "three";
 import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import type { TileIndex } from "../core/tools";
-import type { Tile } from "../core/Tile";
 // @ts-ignore
 import fragmentShader from "../shaders/texture-tile.f.glsl?raw";
 import { type TextureMaker, TileTextureManager } from "../core/TileTextureManager";
@@ -44,7 +43,7 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
         tex: { value: null },
       },
       fragmentShader: fragmentShader,
-    }
+    };
   }
 
   // Must be implemented

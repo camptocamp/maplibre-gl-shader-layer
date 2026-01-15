@@ -44,7 +44,6 @@ export async function canvasTextureDemo() {
     maxPitch: 89,
   });
 
-  map.showTileBoundaries = true
   await new Promise((resolve) => map.on("load", resolve));
 
   const someEmojis = [
