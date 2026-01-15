@@ -3,7 +3,7 @@
  * RawShaderTiledLayer is a layer that simply contains a texture per tile
  */
 
-import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
+import { BackSide, GLSL3, RawShaderMaterial, ShaderMaterialParameters, Vector3 } from "three";
 import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 // @ts-ignore
 import fragmentShader from "../shaders/daylight.f.glsl?raw";
@@ -120,66 +120,38 @@ export class DaylightTiledLayer extends BaseShaderTiledLayer {
     }
   }
 
-  onSetTileMaterial(tileIndex: TileIndex) {
-    const mapProjection = this.map.getProjection();
+  // Must be implemented
+  onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     const timestamp = +this.date / 1000;
     const daysJ2K = toDays(timestamp);
     const { dec, ra } = sunCoords(daysJ2K);
     const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
-    const material = new RawShaderMaterial({
-      // This automatically adds the top-level instruction:
-      // #version 300 es
-      glslVersion: GLSL3,
-
+    return {
       uniforms: {
         colormapTex: { value: this.colormap.getTexture({ gradient: true }) },
         colormapRangeMin: { value: this.colormap.getRange().min },
         colormapRangeMax: { value: this.colormap.getRange().max },
-        zoom: { value: this.map.getZoom() },
-        tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
-        isGlobe: { value: mapProjection && mapProjection.type === "globe" },
         date: { value: timestamp },
-        opacity: { value: this.opacity },
         sunCoordRa: { value: ra },
         sunCoordDec: { value: dec },
         sideralTimeComponent: { value: sideralTimeComponent },
-        altitude: { value: this.altitude },
       },
 
-      vertexShader: this.defaultVertexShader,
       fragmentShader: fragmentShader,
-      side: BackSide,
-      transparent: true,
-      depthTest: false,
-      // wireframe: true,
-    });
-
-    return material;
+    };
   }
 
-  onTileUpdate(tile: Tile) {
-    (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();
-
+  // Must be implemented
+  async onTileUpdate(_tileIndex: TileIndex, material: RawShaderMaterial) {
     const timestamp = +this.date / 1000;
     const daysJ2K = toDays(timestamp);
     const { dec, ra } = sunCoords(daysJ2K);
     const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
-    const mapProjection = this.map.getProjection();
-    const tileIndeArray = tile.getTileIndexAsArray();
-    const mat = tile.material as RawShaderMaterial;
-    const zoom = this.map.getZoom();
-    // At z12+, the globe is no longer globe in Maplibre
-    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
-    mat.uniforms.zoom.value = zoom;
-    mat.uniforms.isGlobe.value = isGlobe;
-    mat.uniforms.opacity.value = this.opacity;
-    mat.uniforms.date.value = timestamp;
-    mat.uniforms.sunCoordRa.value = ra;
-    mat.uniforms.sunCoordDec.value = dec;
-    mat.uniforms.sideralTimeComponent.value = sideralTimeComponent;
-    mat.uniforms.altitude.value = this.altitude;
-    (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+    material.uniforms.date.value = timestamp;
+    material.uniforms.sunCoordRa.value = ra;
+    material.uniforms.sunCoordDec.value = dec;
+    material.uniforms.sideralTimeComponent.value = sideralTimeComponent;
   }
 }

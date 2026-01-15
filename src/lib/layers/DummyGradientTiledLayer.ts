@@ -3,7 +3,7 @@
  * RawShaderTiledLayer is a layer that simply contains a texture per tile
  */
 
-import { BackSide, GLSL3, RawShaderMaterial, Vector3 } from "three";
+import { BackSide, GLSL3, RawShaderMaterial, ShaderMaterialParameters, Vector3 } from "three";
 import { BaseShaderTiledLayer, type BaseShaderTiledLayerOptions } from "../core/BaseShaderTiledLayer";
 
 // @ts-ignore
@@ -18,44 +18,18 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
     super(id, options);
   }
 
-  onSetTileMaterial(tileIndex: TileIndex): RawShaderMaterial {
-    const mapProjection = this.map.getProjection();
-    const material = new RawShaderMaterial({
-      // This automatically adds the top-level instruction:
-      // #version 300 es
-      glslVersion: GLSL3,
-
-      uniforms: {
-        zoom: { value: this.map.getZoom() },
-        tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
-        isGlobe: { value: mapProjection && mapProjection.type === "globe" },
-        altitude: { value: this.altitude },
-      },
-
-      vertexShader: this.defaultVertexShader,
+  // Must be implemented.
+  // The fragment shader for DummyGradientTiledLayer only depends on uniforms
+  // initialized on the parent class BaseShaderTiledLayer such as zoom, tileIndex, etc.
+  // For this reason, there is no need to pass a uniform object as part of the returned value
+  onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
+    return {
       fragmentShader: fragmentShader,
-      side: BackSide,
-      transparent: true,
-      depthTest: false,
-      // wireframe: true,
-    });
-
-    return material;
+    }
   }
 
-  onTileUpdate(tile: Tile) {
-    (tile.material as RawShaderMaterial).uniforms.zoom.value = this.map.getZoom();
-
-    const mapProjection = this.map.getProjection();
-    const tileIndeArray = tile.getTileIndexAsArray();
-    const mat = tile.material as RawShaderMaterial;
-    const zoom = this.map.getZoom();
-    // At z12+, the globe is no longer globe in Maplibre
-    const isGlobe = mapProjection && mapProjection.type === "globe" && zoom < 12;
-
-    mat.uniforms.altitude.value = this.altitude;
-    mat.uniforms.zoom.value = zoom;
-    mat.uniforms.isGlobe.value = isGlobe;
-    (mat.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+  // Must be implemented
+  async onTileUpdate(_tileIndex: TileIndex, _material: RawShaderMaterial) {
+    // Nothing to be done here
   }
 }
