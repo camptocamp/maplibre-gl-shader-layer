@@ -82,8 +82,15 @@ export type MultiChannelSeriesTiledLayerSpecification = {
    */
   attribution?: string[];
 
+  /**
+   * Bounds of the dataset, in meters, in Mercator projection
+   * eg. `[minX, minY, maxX, maxY]`, a.k.a. `[west, south, east, north]`
+   */
   bounds: Bounds;
 
+  /**
+   * Informative only, should be "EPSG:3857"
+   */
   crs?: string;
 
   /**
