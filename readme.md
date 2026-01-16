@@ -109,7 +109,7 @@ There are other aspect of `MultiChannelSeriesTiledLayer` that could not be captu
 - the alpha channel (if present) is used to capture `nodata` (when equal to `0`). That resuls in a pixel not being redered (fully transparent)
 - the color rendering is done using colormaps, that take data points in real world units
 - the series is as long as needed but can also contain a single element
-- the pixel values can be given a dimension name (eg. "°C")
+- the pixel values can be given a dimension name (eg. "Temperature") and a unit (eg. "°C")
 - the series axis can be given a name (eg. "Depth") and a unit ("meter")
 - each element of the series has:
   - its dedicated tileset
@@ -177,5 +177,7 @@ raw value should be strictly smaller than:
 - 256^3 = **16777216** is using 3 channels
 
 If it's greater than those values, then use a coarser precision step (larger `polynomialSlope` value) or narrow the numerical range you want to represent (for instance, temperatures don't always need to be captured in the range [-60, 80] but [-30, 50] may be enough).
+
+The values of `polynomialSlope` and `polynomialOffset` are common across the entire layer, meaning those settings apply to all the tilesets that make the series.
 
 ## Implement your own tiled layer
