@@ -50,6 +50,6 @@ export async function dummyDemo(globe: boolean) {
   map.addLayer(layer);
 
   opacitySlider.addEventListener("input", () => {
-    layer.setAltitude(Number.parseFloat(opacitySlider.value) * 1000000);
+    layer.setAltitude(Number.parseFloat(opacitySlider.value) * 100000);
   });
 }

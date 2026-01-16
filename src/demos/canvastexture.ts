@@ -37,7 +37,7 @@ export async function canvasTextureDemo() {
 
   const map = new maplibregl.Map({
     container,
-    hash: true,
+    hash: false,
     zoom: 4,
     center: [27.35, 38.92],
     style: style,
@@ -119,7 +119,7 @@ export async function canvasTextureDemo() {
 
   map.addLayer(layer);
 
-  // opacitySlider.addEventListener("input", () => {
-  //   layer.setAltitude(Number.parseFloat(opacitySlider.value) * 1000000);
-  // });
+  opacitySlider.addEventListener("input", () => {
+    layer.setOpacity(1 - Number.parseFloat(opacitySlider.value));
+  });
 }

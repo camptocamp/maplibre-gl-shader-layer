@@ -247,6 +247,23 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
     // From z14+ the tile positioning is computed as relative to the center of the map
     const relativeTilePosition = zoom >= 14;
 
+    const updatePositioningMethod = (tile: Tile, tileIndex: TileIndex) => {
+      if (relativeTilePosition) {
+        const { mercSize, mercCenter } = tileIndexToMercatorCenterAndSize(tileIndex);
+        const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
+        const tileSizeMeters = mercSize / mercUnitsPerMeter;
+        const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
+        const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
+        tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
+        tile.position.set(easting, -northing, 0);
+        tile.rotation.set(Math.PI, 0, 0);
+      } else {
+        tile.position.set(0, 0, 0);
+        tile.scale.set(1, 1, 1);
+        tile.rotation.set(0, 0, 0);
+      }
+    }
+
     this.camera.matrixWorldAutoUpdate = false;
     const sceneOriginMercator = maplibregl.MercatorCoordinate.fromLngLat(this.map.getCenter(), 0);
 
@@ -256,20 +273,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
 
       const tile = usedTileMapPrevious.get(tileID);
       if (tile) {
-        if (relativeTilePosition) {
-          const { mercSize, mercCenter } = tileIndexToMercatorCenterAndSize(tileIndex);
-          const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
-          const tileSizeMeters = mercSize / mercUnitsPerMeter;
-          const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
-          const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
-          tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
-          tile.position.set(easting, -northing, 0);
-          tile.rotation.set(Math.PI, 0, 0);
-        } else {
-          tile.position.set(0, 0, 0);
-          tile.scale.set(1, 1, 1);
-          tile.rotation.set(0, 0, 0);
-        }
+        updatePositioningMethod(tile, tileIndex);
 
         // This tile is already in the pool
         usedTileMapNew.set(tileID, tile);
@@ -327,21 +331,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
         tile = new Tile(this.tileGeometry, material);
       }
 
-      if (relativeTilePosition) {
-        const { mercSize, mercCenter } = tileIndexToMercatorCenterAndSize(tileIndex);
-        const mercUnitsPerMeter = mercCenter.meterInMercatorCoordinateUnits();
-        const tileSizeMeters = mercSize / mercUnitsPerMeter;
-        const easting = (mercCenter.x - sceneOriginMercator.x) / mercUnitsPerMeter;
-        const northing = (mercCenter.y - sceneOriginMercator.y) / mercUnitsPerMeter;
-        tile.scale.set(tileSizeMeters, tileSizeMeters, tileSizeMeters);
-        tile.position.set(easting, -northing, 0);
-        tile.rotation.set(Math.PI, 0, 0);
-      } else {
-        tile.position.set(0, 0, 0);
-        tile.scale.set(1, 1, 1);
-        tile.rotation.set(0, 0, 0);
-      }
-
+      updatePositioningMethod(tile, tileIndex);
       usedTileMapNew.set(tileID, tile);
       tile.setTileIndex(tileIndex);
       this.scene.add(tile);
