@@ -131,32 +131,33 @@ height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
 
 `MultiChannelSeriesTiledLayer` has:
 ```bash
-whather_in_world_unit = polynomialOffset + ((R * 256 * 256 + G * 256 + B) * polynomialSlope)
+# 'value' being in real world unit
+value = polynomialOffset + ((R * 256 * 256 + G * 256 + B) * polynomialSlope)
 ```
 
 which is essentially a generic way to do the same thing, and that can also be used on only 1 or 2 color channels:
 ```bash
 # With only 2 channels: G and B
-whather_in_world_unit = polynomialOffset + ((G * 256 + B) * polynomialSlope)
+value = polynomialOffset + ((G * 256 + B) * polynomialSlope)
 ```
 
 ```bash
 # With only 1 channel: B
-whather_in_world_unit = polynomialOffset + (B * polynomialSlope)
+value = polynomialOffset + (B * polynomialSlope)
 ```
 
-The option `rasterEncoding.channels` lets you defined which channels are used and in what order (eg. `"rgb"`, `"gb"`, `"bgr"`, `"b"`, etc.).
+The option `rasterEncoding.channels` lets you define which channels are used and in what order (eg. `"rgb"`, `"gb"`, `"bgr"`, `"b"`, etc.).
 
-The `polynomialOffset` is handy to capture data with large value but that does not start at 0. For instance, air pressure in Pascal are typically measured at mean sea level in a range [90600, 108000], and leaving room to encode the first 90600 would really be a waste of data. More generally, `polynomialOffset` will be the first value of your range, it could be `90600` for air pressure, or it could be `-60` for making sure you can capture -60°C temperature. It is always in real world unit.
+The `polynomialOffset` is handy to capture data range that does not start at 0. For instance, air pressure in Pascal are typically measured at mean sea level in a range [90600, 108000], and leaving room to encode the first 90600 would really be a waste of data. More generally, `polynomialOffset` will be the first value of your range, it could be `90600` for air pressure, or it could be `-60` for making sure you can capture -60°C temperature. It is always in real world unit.
 
-The `polynomialSlope` is used to capture the encoding step, also in real world unit. In the examples about, what is the precision step we want to encode the air pressure at? Id we want to encode steps from `90600` to `90600.1`, then `polynomialSlope` should be `0.1`. If we want to have a 0.01 precision step, then `polynomialSlope` should be `0.01`.
+The `polynomialSlope` is used to capture the encoding step, also in real world unit, and this depends on your use case. Do we want to encode steps from `90600` to `90600.1`? Then `polynomialSlope` should be `0.1`. If we want to have a 0.01 precision step, then `polynomialSlope` should be `0.01`.
 
 Let's see an example more in depth. Weather data is usually in float32, tiles are RGB(a) with uint8 on each channel.
 - R: 8 bits
 - G: 8 bits
 - B: 8 bits
 
-Let’s use the RGB channels to encode uint24 and keep the alpha channel to flag nodata. But… air pressure in Pascal and can range from 90600Pa to 108000Pa, let’s not encode the first 90600 values! To solve this, let’s keep in the metadata:
+Let’s use the RGB channels to encode uint24 and keep the alpha channel to flag nodata. But... air pressure in Pascal can range from 90600Pa to 108000Pa, let’s not encode the first 90600 values! To solve this, let’s keep in the metadata:
 - An offset (90600) (aka. `polynomialOffset`)
 - A precision step (eg. 0.1 if we want to be jump from 90600 to 90600.1) (aka. `polynomialSlope`)
 
@@ -169,12 +170,14 @@ And on each channel:
 - G = (174000 >> 8) & 0xFF = 167
 - B = 174000 & 0xFF = 176
 
-One thing to be careful of is to find the right balance between the range (174000) and the precision (0.1). If the range is too large and the precision step is too small, or else the value with overflow. A good rule of thumb is that:
+One thing to be careful of is to find the right balance between the range and the precision. If the range is too wide and the precision step is too small, the value will overflow.  
 
-raw value should be strictly smaller than:
+A good rule of thumb is that the max raw value (174000) should be strictly smaller than:
 - **256** if using 1 channel
 - 256^2 = **65536** is using 2 channels
 - 256^3 = **16777216** is using 3 channels
+
+In our case (174000) it was the right choice to use 3 channels.
 
 If it's greater than those values, then use a coarser precision step (larger `polynomialSlope` value) or narrow the numerical range you want to represent (for instance, temperatures don't always need to be captured in the range [-60, 80] but [-30, 50] may be enough).
 
