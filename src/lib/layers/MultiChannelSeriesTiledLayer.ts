@@ -2,10 +2,9 @@
  * This is a demo of how to extend ShaderTiledLayer
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
-import { RawShaderMaterial, GLSL3, Vector3, BackSide, ShaderMaterialParameters } from "three";
+import type { RawShaderMaterial, ShaderMaterialParameters } from "three";
 import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import { clamp, pickImg, wgs84ToTileIndex, type TileIndex } from "../core/tools";
-import type { Tile } from "../core/Tile";
 // @ts-ignore
 import fragmentShader from "../shaders/multi-channel-series-tile.f.glsl?raw";
 import type { Colormap } from "../core/Colormap";
@@ -223,7 +222,7 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
         RASTER_ENCODING_CHANNELS: this.rasterEncoding.channels,
         RASTER_ENCODING_NB_CHANNELS: this.rasterEncoding.channels.length,
       },
-    }
+    };
   }
 
   // Must be implemented

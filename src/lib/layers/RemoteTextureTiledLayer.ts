@@ -3,10 +3,9 @@
  * TextureTiledLayer is a layer that simply contains a texture per tile
  */
 
-import { RawShaderMaterial, GLSL3, Vector3, BackSide, ShaderMaterialParameters } from "three";
+import type { RawShaderMaterial, ShaderMaterialParameters } from "three";
 import { BaseShaderTiledLayer } from "../core/BaseShaderTiledLayer";
 import type { TileIndex } from "../core/tools";
-import type { Tile } from "../core/Tile";
 import { RemoteTileTextureManager } from "../core/RemoteTileTextureManager";
 // @ts-ignore
 import fragmentShader from "../shaders/texture-tile.f.glsl?raw";
@@ -49,9 +48,6 @@ export class RemoteTextureTiledLayer extends BaseShaderTiledLayer {
 
   // Must be implemented
   async onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial) {
-    material.uniforms.tex.value = await this.remoteTileTextureManager.getTexture(
-      tileIndex,
-      this.textureUrlPattern,
-    );
+    material.uniforms.tex.value = await this.remoteTileTextureManager.getTexture(tileIndex, this.textureUrlPattern);
   }
 }

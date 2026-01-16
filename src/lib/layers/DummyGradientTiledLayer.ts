@@ -3,13 +3,12 @@
  * RawShaderTiledLayer is a layer that simply contains a texture per tile
  */
 
-import { BackSide, GLSL3, RawShaderMaterial, ShaderMaterialParameters, Vector3 } from "three";
+import type { RawShaderMaterial, ShaderMaterialParameters } from "three";
 import { BaseShaderTiledLayer, type BaseShaderTiledLayerOptions } from "../core/BaseShaderTiledLayer";
 
 // @ts-ignore
 import fragmentShader from "../shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
-import type { Tile } from "../core/Tile";
 
 export type DummyGradientTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, "BaseShaderTiledLayerOptions">;
 
@@ -25,7 +24,7 @@ export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
   onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       fragmentShader: fragmentShader,
-    }
+    };
   }
 
   // Must be implemented

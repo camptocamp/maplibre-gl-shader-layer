@@ -17,8 +17,8 @@ export class Tile extends Mesh {
     material: Material | Material[] | undefined,
   ) {
     super(geometry?.clone(), material);
-    this.matrixAutoUpdate = false;
-    this.matrixWorldAutoUpdate = false;
+    this.matrixAutoUpdate = true;
+    this.matrixWorldAutoUpdate = true;
   }
 
   /**
