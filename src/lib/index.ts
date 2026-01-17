@@ -14,3 +14,4 @@ export * from "./layers/DummyGradientTiledLayer";
 export * from "./layers/MultiChannelSeriesTiledLayer";
 export * from "./layers/RemoteTextureTiledLayer";
 export * from "./layers/CanvasTextureTiledLayer";
+export * from "./layers/DistanceTiledLayer";
