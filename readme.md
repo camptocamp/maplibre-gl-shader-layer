@@ -1,4 +1,12 @@
 
+<p align="center">
+  <img src="public/shader-layer.svg" width="400px">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/npm/v/maplibre-gl-shader-layer"></img>
+</p>
+
 The library `maplibre-gl-shader-layer` provides the building blocks to easily create your own tiled layers for MaplibreGL JS using WebGL and shader code with hooks to tune uniforms for each tile.   
 Under the hood, it's using ThreeJS to make it even easier to get started.
 
