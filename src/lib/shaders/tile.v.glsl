@@ -15,12 +15,11 @@ uniform float altitude;
 in vec3 position;
 in vec2 uv;
 
-// This vPositionUnit is in [0., 1.] to make it easier to map textures
-out vec2 vPositionUnit;
+// This v_uv is in [0., 1.] to make it easier to map textures
+out vec2 v_uv;
 
-// Longitude / latitude in radians: (lon, lat)
-out highp vec2 vLonLat;
-
+// Longitude / latitude in degrees: (lon, lat)
+out highp vec2 v_lonLat;
 
 vec2 mercatorToLonLat(vec2 mercator) {
   float y = mercator.y;
@@ -63,7 +62,7 @@ vec3 projectTileCoordinatesToMercator(vec2 uv, vec3 tileIndex, out vec2 lonLat) 
 }
 
 void main()	{
-  vPositionUnit = position.xy + 0.5;
+  v_uv = uv;
   vec2 lonLat;
 
   if (relativeTilePosition) {
@@ -77,7 +76,7 @@ void main()	{
     gl_Position = projectionMatrix * modelViewMatrix * vec4( worldPos, 1.0 );
   }
 
-  vLonLat = lonLat;
+  v_lonLat = lonLat;
 }
 
 

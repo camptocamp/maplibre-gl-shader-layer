@@ -8,14 +8,12 @@ uniform float colormapRangeMin;
 uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
 uniform float zoom;
-uniform vec3 tileIndex;
 uniform float opacity;
 uniform float sunCoordRa;
 uniform float sunCoordDec;
 uniform float sideralTimeComponent;
 
-in vec2 vPositionUnit;
-in vec2 vLonLat;
+in vec2 v_lonLat;
 out vec4 fragColor;
 
 float getSunAltitude(vec2 lonLat) {
@@ -51,7 +49,7 @@ vec4 getTextureColor(float realWorldValue) {
 
 
 void main()  {
-  float sunAltitude = getSunAltitude(vLonLat);
+  float sunAltitude = getSunAltitude(v_lonLat);
   float altitudeDeg = sunAltitude * 180.0 / PI; // 90° is zenith, 0° is at horizon level
   fragColor = getTextureColor(altitudeDeg);
   fragColor.a *= opacity;

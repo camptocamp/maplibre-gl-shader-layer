@@ -3,14 +3,14 @@ precision highp int;
 
 uniform float zoom;
 in vec3 vPosition;
-in vec2 vPositionUnit;
+in vec2 v_uv;
 out vec4 fragColor;
 
 void main()  {
   vec2 tileCenter = vec2(0.5, 0.5);
-  float distanceToCenter = sqrt(pow(vPositionUnit.x - tileCenter.x, 2.) + pow(vPositionUnit.y - tileCenter.y, 2.));
+  float distanceToCenter = sqrt(pow(v_uv.x - tileCenter.x, 2.) + pow(v_uv.y - tileCenter.y, 2.));
 
-  fragColor = vec4(vPositionUnit.x, vPositionUnit.y, 1., 0.6);
+  fragColor = vec4(v_uv.x, v_uv.y, 1., 0.6);
 
 	float radius = fract(zoom + 0.5) / 2.;
 

@@ -6,7 +6,7 @@ import fragmentShader from "../shaders/distance.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
 import { Colormap } from "../core/Colormap";
 
-export type DistanceTiledLayerOptiosns = Omit<BaseShaderTiledLayerOptions, "tileZoomFitting"> & {
+export type DistanceTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, "tileZoomFitting"> & {
   colormap?: Colormap,
   referencePosition?: {lng: number, lat: number},
 }
@@ -16,7 +16,7 @@ export class DistanceTiledLayer extends BaseShaderTiledLayer {
   private readonly referencePosition: Vector2;
   private colormapTexture: Texture;
 
-  constructor(id: string, options: DistanceTiledLayerOptiosns = {}) {
+  constructor(id: string, options: DistanceTiledLayerOptions = {}) {
     super(id, options);
 
     this.colormap = options.colormap ?? Colormap.fromColormapDescription([

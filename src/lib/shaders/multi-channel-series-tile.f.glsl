@@ -12,7 +12,7 @@ uniform float rasterEncodingPolynomialOffset;
 uniform float colormapRangeMin;
 uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
-in vec2 vPositionUnit;
+in vec2 v_uv;
 out vec4 fragColor;
 
 
@@ -71,9 +71,9 @@ vec4 getTextureColor(float realWorldValue) {
 float getRealWorldValue(sampler2D tex, inout bool isNodata) {
   // Testing bicubic texture interpolation, but input data is too
   // pixalated to make it worth it
-  // vec4 texColor = textureBicubic(tex, vPositionUnit);
+  // vec4 texColor = textureBicubic(tex, v_uv);
 
-  vec4 texColor = texture(tex, vPositionUnit);
+  vec4 texColor = texture(tex, v_uv);
 
   isNodata = (texColor.a == 0.0);
 

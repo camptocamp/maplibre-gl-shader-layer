@@ -11,7 +11,7 @@ uniform float colormapRangeMax;
 uniform sampler2D colormapTex;
 uniform float opacity;
 
-in vec2 vLonLat;
+in vec2 v_lonLat;
 out vec4 fragColor;
 
 
@@ -51,7 +51,7 @@ float distanceKm(vec2 from, vec2 to) {
 
 
 void main()  {
-  float distance = distanceKm(referencePosition, vLonLat);
+  float distance = distanceKm(referencePosition, v_lonLat);
   fragColor = getTextureColor(distance);
   fragColor.a *= opacity;
 }

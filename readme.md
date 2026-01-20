@@ -10,6 +10,13 @@
 The library `maplibre-gl-shader-layer` provides the building blocks to easily create your own tiled layers for MaplibreGL JS using WebGL and shader code with hooks to tune uniforms for each tile.   
 Under the hood, it's using ThreeJS to make it even easier to get started.
 
+Install it with:
+```
+npm install maplibre-gl-shader-layer
+```
+
+Then, you can use one of the built-in layers or create your own in a few steps!
+
 ## Core tools
 
 ### `Colormap` and `ColormapDescriptionLibrary`
@@ -70,6 +77,11 @@ The class `BaseShaderTiledLayer` is the one to inherit from when creating a new 
 - hook the proper rendering functions to sync with Maplibre
 
 The class `BaseShaderTiledLayer` is designed to be extended and not to be used as is. The simplest example of an extension would be (DummyGradientTiledLayer)[src/lib/layers/DummyGradientTiledLayer.ts].
+
+Since all the layers, built-in or homemade, inherit from `BaseShaderTiledLayer`, they come with some methods:
+- `.setVisible(v: boolean)` : toggle the layer visibility. If made invisible, the layer is no longer rendered and all its internal necessary for rendering are no longer called.
+- `.setOpacity(opacity: number)` : set the opacity of the layer with a value in [0, 1]. For homemade layers, this only updates the uniform `opacity` to be used in the fragment shader (more on that in the section [implement-your-own-tiled-layer](#implement-your-own-tiled-layer))
+- `.setAltitude(altitude: number)` : by default, the altitude is 0, if the maps does not have any terrain enabled, the custom layer lays flat (or round when globe) at the surface of the map. If the altitude is higher, the layer with float above ground. The value is supposedly in meters but because of projections this is not to be taken as a precise altitude.
 
 
 ### `DummyGradientTiledLayer`
@@ -192,3 +204,22 @@ If it's greater than those values, then use a coarser precision step (larger `po
 The values of `polynomialSlope` and `polynomialOffset` are common across the entire layer, meaning those settings apply to all the tilesets that make the series.
 
 ## Implement your own tiled layer
+To create your own tiled layer, you have to:
+- extend from the class `BaseShaderTiledLayer`
+- implement the method `onSetTileShaderParameters(...)`, to provide new tiles with some meterial config (*fragment shader*, *uniforms*, *defines*, etc.)
+- implement the method `onTileUpdate(...)` called just before rendering each tile to update uniform values
+- write your own fragment shader, possibly reussing the built-in uniforms and varyings
+
+To get some inspiraration, [DistanceTiledLayer](src/lib/layers/DistanceTiledLayer.ts) is a good example as it's a bit more than the bare minimum, yet is not too complex.
+
+Here are all the built-in **uniforms** that `BaseShaderTiledLayer` adds for you and that are alway accessible from your fragment shader:
+- `float opacity` : updated whenever the method `layer.setOpacity(...)` is called, the value is in the range [0, 1]. Your choice to make use of it with `fragColor.a *= opacity;`
+- `float zoom` : in the range [0, 22], straight comming from `map.getZoom()`
+- `vec3 tileIndex` : the `{z}/{x}/{y}` indices for each tile. Values are integers but actually passed as a vector of float instead of a `ivec3` simply because it's easier to manipulate in the shader (used in the vertex shader but likely not very useful for a fragment shader)
+- `bool isGlobe` : tells whether the map projection is a globe or not (used in the vertex shader but likely not very useful for a fragment shader)
+- `float altitude` : used in the vertex shader and updated with `layer.setAltitude(...)`. Likely not of any use in the fragment shader.
+- `bool relativeTilePosition` : tells whether the tiles are positioned with high-precision. This happens automatically beyond zoom level 15 and is likely of no use in the fragment shader
+
+In addition, there are **varyings** computed by the vertex shader and that are passed to the fragment shader:
+- `vec2 v_uv` : with `v_uv.x` in [0, 1] from west to east and `v_uv.y` in [0, 1] from north to south on each tile.
+- `vec2 v_lonLat` : with `v_lonLat.x` being the longitude in [-180, 180] and `v_lonLat.y` being the latitude in [-85, 85].
