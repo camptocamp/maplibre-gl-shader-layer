@@ -212,14 +212,15 @@ To create your own tiled layer, you have to:
 
 To get some inspiraration, [DistanceTiledLayer](src/lib/layers/DistanceTiledLayer.ts) is a good example as it's a bit more than the bare minimum, yet is not too complex.
 
-Here are all the built-in **uniforms** that `BaseShaderTiledLayer` adds for you and that are alway accessible from your fragment shader:
-- `float opacity` : updated whenever the method `layer.setOpacity(...)` is called, the value is in the range [0, 1]. Your choice to make use of it with `fragColor.a *= opacity;`
-- `float zoom` : in the range [0, 22], straight comming from `map.getZoom()`
-- `vec3 tileIndex` : the `{z}/{x}/{y}` indices for each tile. Values are integers but actually passed as a vector of float instead of a `ivec3` simply because it's easier to manipulate in the shader (used in the vertex shader but likely not very useful for a fragment shader)
-- `bool isGlobe` : tells whether the map projection is a globe or not (used in the vertex shader but likely not very useful for a fragment shader)
-- `float altitude` : used in the vertex shader and updated with `layer.setAltitude(...)`. Likely not of any use in the fragment shader.
-- `bool relativeTilePosition` : tells whether the tiles are positioned with high-precision. This happens automatically beyond zoom level 15 and is likely of no use in the fragment shader
+Here are all the built-in **uniforms**, prefixed `u_`, that `BaseShaderTiledLayer` adds for you and that are alway accessible from your fragment shader:
+- `float u_opacity` : updated whenever the method `layer.setOpacity(...)` is called, the value is in the range [0, 1]. Your choice to make use of it with `fragColor.a *= u_opacity;`
+- `float u_zoom` : in the range [0, 22], straight comming from `map.getZoom()`
+- `vec3 u_tileIndex` : the `{z}/{x}/{y}` indices for each tile. Values are integers but actually passed as a vector of float instead of a `ivec3` simply because it's easier to manipulate in the shader (used in the vertex shader but likely not very useful for a fragment shader)
+- `bool u_isGlobe` : tells whether the map projection is a globe or not (used in the vertex shader but likely not very useful for a fragment shader)
+- `float u_altitude` : used in the vertex shader and updated with `layer.setAltitude(...)`. Likely not of any use in the fragment shader.
+- `bool u_relativeTilePosition` : tells whether the tiles are positioned with high-precision. This happens automatically beyond zoom level 15 and is likely of no use in the fragment shader
 
-In addition, there are **varyings** computed by the vertex shader and that are passed to the fragment shader:
+In addition, there are **varyings**, prefixed `v_`, computed by the vertex shader and that are passed to the fragment shader:
 - `vec2 v_uv` : with `v_uv.x` in [0, 1] from west to east and `v_uv.y` in [0, 1] from north to south on each tile.
 - `vec2 v_lonLat` : with `v_lonLat.x` being the longitude in [-180, 180] and `v_lonLat.y` being the latitude in [-85, 85].
+

@@ -40,7 +40,7 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
   protected onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       uniforms: {
-        tex: { value: null },
+        u_tex: { value: null },
       },
       fragmentShader: fragmentShader,
     };
@@ -48,6 +48,6 @@ export class CanvasTextureTiledLayer extends BaseShaderTiledLayer {
 
   // Must be implemented
   async onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial) {
-    material.uniforms.tex.value = await this.tileTextureManager.getTexture(tileIndex, this.textureMaker);
+    material.uniforms.u_tex.value = await this.tileTextureManager.getTexture(tileIndex, this.textureMaker);
   }
 }

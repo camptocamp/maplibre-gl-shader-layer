@@ -1,8 +1,7 @@
 precision highp float;
 precision highp int;
 
-uniform float zoom;
-in vec3 vPosition;
+uniform float u_zoom;
 in vec2 v_uv;
 out vec4 fragColor;
 
@@ -12,7 +11,7 @@ void main()  {
 
   fragColor = vec4(v_uv.x, v_uv.y, 1., 0.6);
 
-	float radius = fract(zoom + 0.5) / 2.;
+	float radius = fract(u_zoom + 0.5) / 2.;
 
   if (distanceToCenter < radius) {
     fragColor.a = 0.0;

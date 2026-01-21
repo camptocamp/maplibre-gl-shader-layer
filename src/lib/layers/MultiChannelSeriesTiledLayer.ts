@@ -208,16 +208,16 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
   onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       uniforms: {
-        texBefore: { value: null },
-        texAfter: { value: null },
-        seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
-        seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
-        seriesAxisValue: { value: this.seriesAxisValue },
-        rasterEncodingPolynomialSlope: { value: this.rasterEncoding.polynomialSlope },
-        rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
-        colormapRangeMin: { value: this.colormap.getRange().min },
-        colormapRangeMax: { value: this.colormap.getRange().max },
-        colormapTex: {
+        u_texBefore: { value: null },
+        u_texAfter: { value: null },
+        u_seriesAxisValueBefore: { value: this.seriesElementBefore.seriesAxisValue },
+        u_seriesAxisValueAfter: { value: this.seriesElementAfter.seriesAxisValue },
+        u_seriesAxisValue: { value: this.seriesAxisValue },
+        u_rasterEncodingPolynomialSlope: { value: this.rasterEncoding.polynomialSlope },
+        u_rasterEncodingPolynomialOffset: { value: this.rasterEncoding.polynomialOffset },
+        u_colormapRangeMin: { value: this.colormap.getRange().min },
+        u_colormapRangeMax: { value: this.colormap.getRange().max },
+        u_colormapTex: {
           value: this.colormap.getTexture({
             gradient: this.colormapGradient,
             size: this.colormapGradient ? 512 : 4096,
@@ -248,11 +248,11 @@ export class MultiChannelSeriesTiledLayer extends BaseShaderTiledLayer {
       ),
     ]);
 
-    material.uniforms.texBefore.value = texBeforeAfter[0].status === "fulfilled" ? texBeforeAfter[0].value : null;
-    material.uniforms.texAfter.value = texBeforeAfter[1].status === "fulfilled" ? texBeforeAfter[1].value : null;
-    material.uniforms.seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
-    material.uniforms.seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
-    material.uniforms.seriesAxisValue.value = this.seriesAxisValue;
+    material.uniforms.u_texBefore.value = texBeforeAfter[0].status === "fulfilled" ? texBeforeAfter[0].value : null;
+    material.uniforms.u_texAfter.value = texBeforeAfter[1].status === "fulfilled" ? texBeforeAfter[1].value : null;
+    material.uniforms.u_seriesAxisValueBefore.value = this.seriesElementBefore.seriesAxisValue;
+    material.uniforms.u_seriesAxisValueAfter.value = this.seriesElementAfter.seriesAxisValue;
+    material.uniforms.u_seriesAxisValue.value = this.seriesAxisValue;
   }
 
   /**

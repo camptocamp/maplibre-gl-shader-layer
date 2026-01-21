@@ -5,11 +5,11 @@ precision highp int;
 #define RAD (PI / 180.0)
 #define EARTH_RADIUS 6371008.8
 
-uniform vec2 referencePosition;
-uniform float colormapRangeMin;
-uniform float colormapRangeMax;
-uniform sampler2D colormapTex;
-uniform float opacity;
+uniform vec2 u_referencePosition;
+uniform float u_colormapRangeMin;
+uniform float u_colormapRangeMax;
+uniform sampler2D u_colormapTex;
+uniform float u_opacity;
 
 in vec2 v_lonLat;
 out vec4 fragColor;
@@ -18,13 +18,13 @@ out vec4 fragColor;
 // Scales a value from the colormap range (in real-world unit)
 // to [0, 1]
 float rescaleToTexture(float realWorldValue) {
-  return (realWorldValue - colormapRangeMin) / (colormapRangeMax - colormapRangeMin);
+  return (realWorldValue - u_colormapRangeMin) / (u_colormapRangeMax - u_colormapRangeMin);
 }
 
 // Looks up the colormaps color from a given real world unit
 vec4 getTextureColor(float realWorldValue) {
   float unitPosition = rescaleToTexture(realWorldValue);
-  return texture(colormapTex, vec2(unitPosition, 0.5));
+  return texture(u_colormapTex, vec2(unitPosition, 0.5));
 }
 
 
@@ -51,7 +51,7 @@ float distanceKm(vec2 from, vec2 to) {
 
 
 void main()  {
-  float distance = distanceKm(referencePosition, v_lonLat);
+  float distance = distanceKm(u_referencePosition, v_lonLat);
   fragColor = getTextureColor(distance);
-  fragColor.a *= opacity;
+  fragColor.a *= u_opacity;
 }

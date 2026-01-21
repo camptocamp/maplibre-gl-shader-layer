@@ -45,10 +45,10 @@ export class DistanceTiledLayer extends BaseShaderTiledLayer {
   onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       uniforms: {
-        colormapTex: { value: this.colormapTexture },
-        referencePosition: { value: new Vector2(0, 0) },
-        colormapRangeMin: { value: this.colormap.getRange().min },
-        colormapRangeMax: { value: this.colormap.getRange().max },
+        u_colormapTex: { value: this.colormapTexture },
+        u_referencePosition: { value: new Vector2(0, 0) },
+        u_colormapRangeMin: { value: this.colormap.getRange().min },
+        u_colormapRangeMax: { value: this.colormap.getRange().max },
       },
       fragmentShader: fragmentShader,
     };
@@ -56,14 +56,14 @@ export class DistanceTiledLayer extends BaseShaderTiledLayer {
 
   // Must be implemented
   async onTileUpdate(_tileIndex: TileIndex, material: RawShaderMaterial) {
-    material.uniforms.referencePosition.value = this.referencePosition;
+    material.uniforms.u_referencePosition.value = this.referencePosition;
 
     // Generating a colormap texture is costly, we need to make
     // sure it happens only when necessary
-    if (material.uniforms.colormapTex.value !== this.colormapTexture) {
-      material.uniforms.colormapTex.value = this.colormapTexture;
-      material.uniforms.colormapRangeMin.value = this.colormap.getRange().min;
-      material.uniforms.colormapRangeMax.value = this.colormap.getRange().max;
+    if (material.uniforms.u_colormapTex.value !== this.colormapTexture) {
+      material.uniforms.u_colormapTex.value = this.colormapTexture;
+      material.uniforms.u_colormapRangeMin.value = this.colormap.getRange().min;
+      material.uniforms.u_colormapRangeMax.value = this.colormap.getRange().max;
     }
   }
 

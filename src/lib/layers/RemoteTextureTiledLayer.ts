@@ -40,7 +40,7 @@ export class RemoteTextureTiledLayer extends BaseShaderTiledLayer {
   onSetTileShaderParameters(_tileIndex: TileIndex): ShaderMaterialParameters {
     return {
       uniforms: {
-        tex: { value: null },
+        u_tex: { value: null },
       },
       fragmentShader: fragmentShader,
     };
@@ -48,6 +48,6 @@ export class RemoteTextureTiledLayer extends BaseShaderTiledLayer {
 
   // Must be implemented
   async onTileUpdate(tileIndex: TileIndex, material: RawShaderMaterial) {
-    material.uniforms.tex.value = await this.remoteTileTextureManager.getTexture(tileIndex, this.textureUrlPattern);
+    material.uniforms.u_tex.value = await this.remoteTileTextureManager.getTexture(tileIndex, this.textureUrlPattern);
   }
 }
