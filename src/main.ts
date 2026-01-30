@@ -6,6 +6,7 @@ import { weatherDaylightDemo } from "./demos/weatherdaylight";
 import { daylightDemo } from "./demos/daylight";
 import { simpletextureDemo } from "./demos/remotetexture";
 import { canvasTextureDemo } from "./demos/canvastexture";
+import { distanceDemo } from "./demos/distance";
 
 const demos = {
   dummy: () => {
@@ -14,6 +15,10 @@ const demos = {
 
   "dummy-mercator": () => {
     dummyDemo(false);
+  },
+
+  "distance": () => {
+    distanceDemo(true);
   },
 
   "day-night": () => {

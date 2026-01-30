@@ -10,7 +10,7 @@ import { BaseShaderTiledLayer, type BaseShaderTiledLayerOptions } from "../core/
 import fragmentShader from "../shaders/dummy-gradient.f.glsl?raw";
 import type { TileIndex } from "../core/tools";
 
-export type DummyGradientTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, "BaseShaderTiledLayerOptions">;
+export type DummyGradientTiledLayerOptions = Omit<BaseShaderTiledLayerOptions, "tileZoomFitting">;
 
 export class DummyGradientTiledLayer extends BaseShaderTiledLayer {
   constructor(id: string, options: DummyGradientTiledLayerOptions = {}) {

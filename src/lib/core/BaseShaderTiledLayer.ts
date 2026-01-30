@@ -319,12 +319,12 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
           ...shaderMaterialParameters.uniforms,
 
           // Mandatory uniforms
-          zoom: { value: this.map.getZoom() },
-          tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
-          isGlobe: { value: mapProjection && mapProjection.type === "globe" },
-          opacity: { value: this.opacity },
-          altitude: { value: this.altitude },
-          relativeTilePosition: { value: relativeTilePosition },
+          u_zoom: { value: this.map.getZoom() },
+          u_tileIndex: { value: new Vector3(tileIndex.x, tileIndex.y, tileIndex.z) },
+          u_isGlobe: { value: mapProjection && mapProjection.type === "globe" },
+          u_opacity: { value: this.opacity },
+          u_altitude: { value: this.altitude },
+          u_relativeTilePosition: { value: relativeTilePosition },
         };
 
         const material = new RawShaderMaterial(shaderMaterialParameters);
@@ -363,12 +363,12 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
 
     // Update built-in uniforms
     const tileIndeArray = tile.getTileIndexAsArray();
-    tileRawMaterial.uniforms.zoom.value = zoom;
-    tileRawMaterial.uniforms.isGlobe.value = isGlobe;
-    tileRawMaterial.uniforms.opacity.value = this.opacity;
-    (tileRawMaterial.uniforms.tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
-    tileRawMaterial.uniforms.altitude.value = this.altitude;
-    tileRawMaterial.uniforms.relativeTilePosition.value = relativeTilePosition;
+    tileRawMaterial.uniforms.u_zoom.value = zoom;
+    tileRawMaterial.uniforms.u_isGlobe.value = isGlobe;
+    tileRawMaterial.uniforms.u_opacity.value = this.opacity;
+    (tileRawMaterial.uniforms.u_tileIndex.value as Vector3).set(tileIndeArray[0], tileIndeArray[1], tileIndeArray[2]);
+    tileRawMaterial.uniforms.u_altitude.value = this.altitude;
+    tileRawMaterial.uniforms.u_relativeTilePosition.value = relativeTilePosition;
   }
 
   setOpacity(opacity: number) {

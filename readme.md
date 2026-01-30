@@ -1,6 +1,21 @@
 
+<p align="center">
+  <img src="public/shader-layer.svg" width="400px">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/npm/v/maplibre-gl-shader-layer"></img>
+</p>
+
 The library `maplibre-gl-shader-layer` provides the building blocks to easily create your own tiled layers for MaplibreGL JS using WebGL and shader code with hooks to tune uniforms for each tile.   
 Under the hood, it's using ThreeJS to make it even easier to get started.
+
+Install it with:
+```
+npm install maplibre-gl-shader-layer
+```
+
+Then, you can use one of the built-in layers or create your own in a few steps!
 
 ## Core tools
 
@@ -63,6 +78,11 @@ The class `BaseShaderTiledLayer` is the one to inherit from when creating a new 
 
 The class `BaseShaderTiledLayer` is designed to be extended and not to be used as is. The simplest example of an extension would be (DummyGradientTiledLayer)[src/lib/layers/DummyGradientTiledLayer.ts].
 
+Since all the layers, built-in or homemade, inherit from `BaseShaderTiledLayer`, they come with some methods:
+- `.setVisible(v: boolean)` : toggle the layer visibility. If made invisible, the layer is no longer rendered and all its internal necessary for rendering are no longer called.
+- `.setOpacity(opacity: number)` : set the opacity of the layer with a value in [0, 1]. For homemade layers, this only updates the uniform `opacity` to be used in the fragment shader (more on that in the section [implement-your-own-tiled-layer](#implement-your-own-tiled-layer))
+- `.setAltitude(altitude: number)` : by default, the altitude is 0, if the maps does not have any terrain enabled, the custom layer lays flat (or round when globe) at the surface of the map. If the altitude is higher, the layer with float above ground. The value is supposedly in meters but because of projections this is not to be taken as a precise altitude.
+
 
 ### `DummyGradientTiledLayer`
 The (DummyGradientTiledLayer)[src/lib/layers/DummyGradientTiledLayer.ts] is an example of how to extend `BaseShaderTiledLayer`. An actual demo can be found at [dummy.ts](src/demos/dummy.ts). 
@@ -96,6 +116,12 @@ It takes a tile index (`{z: number, x: number, y: number}`) and spits out a Prom
 
 ![canvas-tile-layer](resources/screenshots/canvas-tiles.png)
 Look into [this demo](src/demos/canvastexture.ts) to see how `CanvasTextureTiledLayer`is being used.
+
+### `DistanceTiledLayer`
+This layer is also nice as learning material, but can possibly be usefull for actual situation. This layer let's you define a radial pattern around a position. It's useful to create a focus zone, with the out-of-focus zone being slightly darker. But since what you provide is a position (the center) and a colormap that has distances in km as data stops, then you can also create a radial rainbow that would symbolize the iso distance from a reference point. Once the layer is monted, you can update the reference position and/or the colormap.
+
+![distance-tile-layer](resources/screenshots/distance.png)
+Look into the demo [distance.ts](src/demos/distance.ts) to see how the colormap is generated.
 
 ### `MultiChannelSeriesTiledLayer`
 The `MultiChannelSeriesTiledLayer` is probably the most advanced built-in layer available here. Let's unpack the reasons it's named like that:
@@ -184,3 +210,23 @@ If it's greater than those values, then use a coarser precision step (larger `po
 The values of `polynomialSlope` and `polynomialOffset` are common across the entire layer, meaning those settings apply to all the tilesets that make the series.
 
 ## Implement your own tiled layer
+To create your own tiled layer, you have to:
+- extend from the class `BaseShaderTiledLayer`
+- implement the method `onSetTileShaderParameters(...)`, to provide new tiles with some meterial config (*fragment shader*, *uniforms*, *defines*, etc.)
+- implement the method `onTileUpdate(...)` called just before rendering each tile to update uniform values
+- write your own fragment shader, possibly reussing the built-in uniforms and varyings
+
+To get some inspiraration, [DistanceTiledLayer](src/lib/layers/DistanceTiledLayer.ts) is a good example as it's a bit more than the bare minimum, yet is not too complex.
+
+Here are all the built-in **uniforms**, prefixed `u_`, that `BaseShaderTiledLayer` adds for you and that are alway accessible from your fragment shader:
+- `float u_opacity` : updated whenever the method `layer.setOpacity(...)` is called, the value is in the range [0, 1]. Your choice to make use of it with `fragColor.a *= u_opacity;`
+- `float u_zoom` : in the range [0, 22], straight comming from `map.getZoom()`
+- `vec3 u_tileIndex` : the `{z}/{x}/{y}` indices for each tile. Values are integers but actually passed as a vector of float instead of a `ivec3` simply because it's easier to manipulate in the shader (used in the vertex shader but likely not very useful for a fragment shader)
+- `bool u_isGlobe` : tells whether the map projection is a globe or not (used in the vertex shader but likely not very useful for a fragment shader)
+- `float u_altitude` : used in the vertex shader and updated with `layer.setAltitude(...)`. Likely not of any use in the fragment shader.
+- `bool u_relativeTilePosition` : tells whether the tiles are positioned with high-precision. This happens automatically beyond zoom level 15 and is likely of no use in the fragment shader
+
+In addition, there are **varyings**, prefixed `v_`, computed by the vertex shader and that are passed, with interpolated values, to the fragment shader:
+- `vec2 v_uv` : with `v_uv.x` in [0, 1] from west to east and `v_uv.y` in [0, 1] from north to south on each tile.
+- `vec2 v_lonLat` : with `v_lonLat.x` being the longitude in [-180, 180] and `v_lonLat.y` being the latitude in [-85, 85].
+

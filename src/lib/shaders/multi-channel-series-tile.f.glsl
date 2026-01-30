@@ -1,18 +1,18 @@
 precision highp float;
 precision highp int;
 
-uniform sampler2D texBefore;
-uniform sampler2D texAfter;
-uniform float opacity;
-uniform float seriesAxisValueBefore;
-uniform float seriesAxisValueAfter;
-uniform float seriesAxisValue;
-uniform float rasterEncodingPolynomialSlope;
-uniform float rasterEncodingPolynomialOffset;
-uniform float colormapRangeMin;
-uniform float colormapRangeMax;
-uniform sampler2D colormapTex;
-in vec2 vPositionUnit;
+uniform sampler2D u_texBefore;
+uniform sampler2D u_texAfter;
+uniform float u_opacity;
+uniform float u_seriesAxisValueBefore;
+uniform float u_seriesAxisValueAfter;
+uniform float u_seriesAxisValue;
+uniform float u_rasterEncodingPolynomialSlope;
+uniform float u_rasterEncodingPolynomialOffset;
+uniform float u_colormapRangeMin;
+uniform float u_colormapRangeMax;
+uniform sampler2D u_colormapTex;
+in vec2 v_uv;
 out vec4 fragColor;
 
 
@@ -58,22 +58,22 @@ vec4 textureBicubic(sampler2D tex, vec2 texCoords){
 // Scales a value from the colormap range (in real-world unit)
 // to [0, 1]
 float rescaleToTexture(float realWorldValue) {
-  return (realWorldValue - colormapRangeMin) / (colormapRangeMax - colormapRangeMin);
+  return (realWorldValue - u_colormapRangeMin) / (u_colormapRangeMax - u_colormapRangeMin);
 }
 
 // Looks up the colormaps color from a given real world unit
 vec4 getTextureColor(float realWorldValue) {
   float unitPosition = rescaleToTexture(realWorldValue);
-  return texture(colormapTex, vec2(unitPosition, 0.5));
+  return texture(u_colormapTex, vec2(unitPosition, 0.5));
 }
 
 
 float getRealWorldValue(sampler2D tex, inout bool isNodata) {
   // Testing bicubic texture interpolation, but input data is too
   // pixalated to make it worth it
-  // vec4 texColor = textureBicubic(tex, vPositionUnit);
+  // vec4 texColor = textureBicubic(tex, v_uv);
 
-  vec4 texColor = texture(tex, vPositionUnit);
+  vec4 texColor = texture(tex, v_uv);
 
   isNodata = (texColor.a == 0.0);
 
@@ -94,7 +94,7 @@ float getRealWorldValue(sampler2D tex, inout bool isNodata) {
   #endif
 
   // The value in real world unit
-  float y = rasterEncodingPolynomialSlope * x + rasterEncodingPolynomialOffset;
+  float y = u_rasterEncodingPolynomialSlope * x + u_rasterEncodingPolynomialOffset;
   return y;
 }
 
@@ -102,19 +102,19 @@ float getRealWorldValue(sampler2D tex, inout bool isNodata) {
 
 
 void main()  {
-  bool texBeforeIsNodata = false;
-  bool texAfterIsNodata = false;
-  float realWorldValueBefore = getRealWorldValue(texBefore, texBeforeIsNodata);
-  float realWorldValueAfter = getRealWorldValue(texAfter, texAfterIsNodata);
+  bool u_texBeforeIsNodata = false;
+  bool u_texAfterIsNodata = false;
+  float realWorldValueBefore = getRealWorldValue(u_texBefore, u_texBeforeIsNodata);
+  float realWorldValueAfter = getRealWorldValue(u_texAfter, u_texAfterIsNodata);
 
-  if (texBeforeIsNodata || texAfterIsNodata) {
+  if (u_texBeforeIsNodata || u_texAfterIsNodata) {
     // fragColor = vec4(1., 0., 0., 0.3);
     discard;
     return;
   }
 
-  float ratioAfter = seriesAxisValueAfter == seriesAxisValueBefore ? 0.0 : (seriesAxisValue - seriesAxisValueBefore) / (seriesAxisValueAfter - seriesAxisValueBefore);
+  float ratioAfter = u_seriesAxisValueAfter == u_seriesAxisValueBefore ? 0.0 : (u_seriesAxisValue - u_seriesAxisValueBefore) / (u_seriesAxisValueAfter - u_seriesAxisValueBefore);
   float interpolatedRealWorldValue = ratioAfter * realWorldValueAfter + (1. - ratioAfter) * realWorldValueBefore;
   fragColor = getTextureColor(interpolatedRealWorldValue);
-  fragColor.a *= opacity; 
+  fragColor.a *= u_opacity; 
 }

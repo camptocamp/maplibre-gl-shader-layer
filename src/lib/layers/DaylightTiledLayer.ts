@@ -128,13 +128,13 @@ export class DaylightTiledLayer extends BaseShaderTiledLayer {
 
     return {
       uniforms: {
-        colormapTex: { value: this.colormap.getTexture({ gradient: true }) },
-        colormapRangeMin: { value: this.colormap.getRange().min },
-        colormapRangeMax: { value: this.colormap.getRange().max },
-        date: { value: timestamp },
-        sunCoordRa: { value: ra },
-        sunCoordDec: { value: dec },
-        sideralTimeComponent: { value: sideralTimeComponent },
+        u_colormapTex: { value: this.colormap.getTexture({ gradient: true }) },
+        u_colormapRangeMin: { value: this.colormap.getRange().min },
+        u_colormapRangeMax: { value: this.colormap.getRange().max },
+        u_date: { value: timestamp },
+        u_sunCoordRa: { value: ra },
+        u_sunCoordDec: { value: dec },
+        u_sideralTimeComponent: { value: sideralTimeComponent },
       },
 
       fragmentShader: fragmentShader,
@@ -148,9 +148,9 @@ export class DaylightTiledLayer extends BaseShaderTiledLayer {
     const { dec, ra } = sunCoords(daysJ2K);
     const sideralTimeComponent = computeSideralTimeComponent(daysJ2K);
 
-    material.uniforms.date.value = timestamp;
-    material.uniforms.sunCoordRa.value = ra;
-    material.uniforms.sunCoordDec.value = dec;
-    material.uniforms.sideralTimeComponent.value = sideralTimeComponent;
+    material.uniforms.u_date.value = timestamp;
+    material.uniforms.u_sunCoordRa.value = ra;
+    material.uniforms.u_sunCoordDec.value = dec;
+    material.uniforms.u_sideralTimeComponent.value = sideralTimeComponent;
   }
 }
