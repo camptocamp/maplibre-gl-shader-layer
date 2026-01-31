@@ -55,7 +55,7 @@ A Colormap instance exposes several methods:
 
 
 ### `RemoteTileTextureManager`
-An instance of `RemoteTileTextureManager` is encapsulating the logic of fetching a tile texture based on a URL pattern such as `https://example.com/{z}/{x}/{y}.png`. In addition to the fetching, it also contains a cache and the logic to turn an image into a compatible WebGL texture. As a result, even thought it is by no means mandatory to use, it is still handy to rely on it to create a textures pool from distant tile files.
+An instance of `RemoteTileTextureManager` is encapsulating the logic of fetching a tile texture based on a URL pattern such as `https://example.com/{z}/{x}/{y}.png` using the method `.getTextureFromUrlPattern(...)`. In addition to the fetching, it also contains a cache and the logic to turn an image into a compatible WebGL texture. As a result, even thought it is by no means mandatory to use, it is still handy to rely on it to create a textures pool from distant tile files.
 
 You can find a usage of it in [RemoteTextureTiledLayer](src/lib/layers/RemoteTextureTiledLayer.ts).
 

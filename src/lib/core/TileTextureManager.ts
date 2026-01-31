@@ -9,11 +9,11 @@ export type TileTextureManagerOptions = {
 /**
  * Type of asny function that input atile index and output a ThreeJS texture
  */
-export type TextureMaker = (tileIndex: TileIndex) => Promise<Texture>;
+export type TextureMaker = (tileIndex: TileIndex, tileId: string) => Promise<Texture>;
 
 export class TileTextureManager {
-  private readonly texturePool: QuickLRU<string, Texture>;
-  private readonly unavailableTextures = new Set();
+  protected readonly texturePool: QuickLRU<string, Texture>;
+  protected readonly unavailableTextures = new Set();
 
   constructor(options: TileTextureManagerOptions = {}) {
     const cacheSize = options.cacheSize ?? 10000;
@@ -37,20 +37,20 @@ export class TileTextureManager {
   getTexture(tileIndex: TileIndex, textureMaker: TextureMaker): Promise<Texture> {
     return new Promise((resolve, reject) => {
       const tileIndexWrapped = wrapTileIndex(tileIndex);
-      const textureId = tileIndexToString(tileIndexWrapped);
+      const tileId = tileIndexToString(tileIndexWrapped);
 
       // The texture is not existing. An unfruitful attempt was made already
-      if (this.unavailableTextures.has(textureId)) {
+      if (this.unavailableTextures.has(tileId)) {
         return reject(new Error("Could not load texture."));
       }
 
       // The texture is in the pool of already fetched textures
-      if (this.texturePool.has(textureId)) {
-        resolve(this.texturePool.get(textureId) as Texture);
+      if (this.texturePool.has(tileId)) {
+        resolve(this.texturePool.get(tileId) as Texture);
         return;
       }
 
-      textureMaker(tileIndex)
+      textureMaker(tileIndex, tileId)
         .then((texture: Texture) => {
           if (!texture) {
             reject(new Error("Could not load texture."));
@@ -58,13 +58,12 @@ export class TileTextureManager {
           }
 
           texture.flipY = false;
-          this.texturePool.set(textureId, texture);
+          this.texturePool.set(tileId, texture);
           resolve(texture);
         })
         .catch(() => {
-          this.unavailableTextures.add(textureId);
+          this.unavailableTextures.add(tileId);
           reject(new Error("Could not load texture."));
-          return;
         });
     });
   }

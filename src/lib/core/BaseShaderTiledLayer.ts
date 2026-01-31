@@ -262,7 +262,7 @@ export abstract class BaseShaderTiledLayer implements maplibregl.CustomLayerInte
         tile.scale.set(1, 1, 1);
         tile.rotation.set(0, 0, 0);
       }
-    }
+    };
 
     this.camera.matrixWorldAutoUpdate = false;
     const sceneOriginMercator = maplibregl.MercatorCoordinate.fromLngLat(this.map.getCenter(), 0);
